@@ -331,6 +331,11 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   box-shadow: 0 -6px 20px rgba(0,0,0,.25);
 }
 .group-save-bar .btn { width: 100%; padding: 14px; font-size: 14px; }
+.btn-ghost-light {
+  background: transparent; color: var(--orange);
+  border: 1.5px solid var(--orange);
+}
+.btn-ghost-light:hover { background: rgba(232,115,12,.12); }
 .group-save-hint { font-size: 11px; color: var(--muted); text-align: center; }
 .result-badge {
   display: inline-flex; align-items: center; gap: 4px;
@@ -980,6 +985,38 @@ function flagImg(team) {
   return `<img class="team-flag-img" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="${team}" loading="lazy" onerror="this.outerHTML='<span class=&quot;flag-abbr&quot;>${abbr}</span>'">`;
 }
 
+// Approximate FIFA ranking points per team (factual rating data; used only to
+// seed an auto-prediction the user can then edit). Higher = stronger.
+const FIFA_RATING = {
+  "Argentina":1887,"France":1862,"Spain":1854,"England":1820,"Brazil":1777,
+  "Portugal":1772,"Netherlands":1754,"Belgium":1745,"Germany":1716,"Croatia":1707,
+  "Morocco":1700,"Colombia":1690,"Uruguay":1680,"United States":1660,"Switzerland":1648,
+  "Senegal":1645,"Japan":1640,"Mexico":1636,"Iran":1633,"Ecuador":1570,
+  "Austria":1565,"Australia":1560,"Sweden":1555,"Ivory Coast":1550,"South Korea":1545,
+  "Egypt":1540,"Norway":1530,"Algeria":1525,"Scotland":1500,"Paraguay":1490,
+  "Tunisia":1480,"Canada":1475,"Turkey":1470,"Czechia":1465,"DR Congo":1460,
+  "Qatar":1455,"Saudi Arabia":1450,"Iraq":1440,"South Africa":1435,"Bosnia":1430,
+  "Uzbekistan":1425,"Jordan":1400,"Ghana":1395,"Cape Verde":1380,"New Zealand":1320,
+  "Panama":1315,"Curacao":1290,"Haiti":1265
+};
+
+// Turn a rating gap into a plausible scoreline. Stronger team wins by a margin
+// that grows with the gap; close ratings lean toward a draw.
+function predictScore(home, away) {
+  const rh = FIFA_RATING[home] || 1450;
+  const ra = FIFA_RATING[away] || 1450;
+  const diff = rh - ra;
+  const a = Math.abs(diff);
+  let strongGoals, weakGoals;
+  if(a < 35)       { strongGoals = 1; weakGoals = 1; }   // ~draw
+  else if(a < 90)  { strongGoals = 2; weakGoals = 1; }
+  else if(a < 160) { strongGoals = 2; weakGoals = 0; }
+  else if(a < 240) { strongGoals = 3; weakGoals = 1; }
+  else             { strongGoals = 3; weakGoals = 0; }
+  if(diff >= 0) return { home: strongGoals, away: weakGoals };
+  return { home: weakGoals, away: strongGoals };
+}
+
 const GROUPS = {
   A: ["Mexico","South Africa","South Korea","Czechia"],
   B: ["Canada","Bosnia","Qatar","Switzerland"],
@@ -1405,8 +1442,9 @@ async function loadMatchCards() {
   const cardsHtml = matches.map(m => buildMatchCard(m, userBets[m.id], results[m.id])).join("");
   const saveBar = locked ? "" : `
     <div class="group-save-bar">
+      <button class="btn btn-ghost-light" id="autoPredictBtn" onclick="autoPredictGroup()">🔮 Auto-predict by FIFA ranking</button>
       <button class="btn btn-gold" id="groupSaveBtn" onclick="saveGroupBets()">💾 Save All Predictions in This Group</button>
-      <span class="group-save-hint">Saves every match shown above at once. Blank matches are skipped.</span>
+      <span class="group-save-hint">Auto-predict fills empty matches from FIFA rankings — review and tweak, then save. It won't overwrite scores you've already typed.</span>
     </div>`;
   container.innerHTML = cardsHtml + saveBar;
 }
@@ -1457,6 +1495,31 @@ function renderProgress(userBets, results) {
   const lockedTotal = ALL_MATCHES.filter(m => results[m.id] && results[m.id].homeGoals !== undefined).length;
   rows.insertAdjacentHTML("beforeend",
     `<div class="progress-note">Predictions save per group with the button at the bottom of the list.${lockedTotal ? ` ${lockedTotal} match${lockedTotal>1?"es are":" is"} locked (result already in).` : ""}</div>`);
+}
+
+// Fill the current group's empty matches with FIFA-ranking-based predictions.
+// Leaves matches the user already filled in untouched, and skips locked ones.
+function autoPredictGroup() {
+  if(isAdmin) return;
+  let filled = 0, skippedFilled = 0, skippedLocked = 0;
+  for(const m of _currentBetMatches) {
+    const res = _currentBetResults[m.id];
+    if(res && res.homeGoals !== undefined) { skippedLocked++; continue; }   // result in → locked
+    const hEl = document.getElementById(`h_${m.id}`);
+    const aEl = document.getElementById(`a_${m.id}`);
+    if(!hEl || !aEl) continue;
+    if(hEl.value !== "" || aEl.value !== "") { skippedFilled++; continue; }  // don't overwrite user input
+    const pred = predictScore(m.homeTeam, m.awayTeam);
+    hEl.value = pred.home;
+    aEl.value = pred.away;
+    filled++;
+    const card = document.getElementById(`card-${m.id}`);
+    if(card) { card.style.borderColor = "var(--orange)"; }
+  }
+  setTimeout(() => { document.querySelectorAll(".match-card").forEach(c => c.style.borderColor = ""); }, 1500);
+  if(filled) showToast(`🔮 Predicted ${filled} match${filled>1?"es":""}${skippedFilled?` · kept your ${skippedFilled} existing`:""}. Review, then Save.`);
+  else if(skippedFilled) showToast("All matches already have your scores — nothing to auto-fill.", "error");
+  else showToast("Nothing to predict here.", "error");
 }
 
 async function saveGroupBets() {
