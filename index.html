@@ -127,6 +127,7 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   background: var(--orange); color: #fff;
   font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase;
   text-align: center; padding: 6px 16px;
+  width: 100%; box-sizing: border-box; white-space: normal; line-height: 1.4;
 }
 /* Contribution badges */
 .contrib-badge { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
@@ -139,6 +140,41 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 }
 .invite-link-box code { font-family: monospace; font-size: 13px; color: var(--orange); word-break: break-all; flex: 1; min-width: 200px; }
 .my-status-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background: var(--navy); border:1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
+
+/* Prediction progress tracker */
+.progress-tracker {
+  background: var(--navy); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 16px;
+}
+.progress-tracker-title {
+  font-size: 13px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase;
+  color: var(--text); margin-bottom: 14px;
+}
+.progress-row { margin-bottom: 14px; }
+.progress-row:last-child { margin-bottom: 0; }
+.progress-row-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-bottom: 6px; flex-wrap: wrap;
+}
+.progress-row-label { font-size: 13px; font-weight: 700; color: var(--text); }
+.progress-row-label .active-pill {
+  font-size: 9px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase;
+  background: var(--orange); color: #fff; padding: 2px 7px; border-radius: 8px; margin-left: 8px;
+}
+.progress-row-stats { font-size: 12px; color: var(--muted); }
+.progress-row-stats strong { color: var(--text); }
+.progress-row-stats .remaining { color: #FF9B3D; font-weight: 700; }
+.progress-row-stats .done { color: #4ADE94; font-weight: 700; }
+.progress-bar {
+  height: 9px; background: var(--dark); border-radius: 999px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 999px; transition: width .4s ease;
+  background: linear-gradient(90deg, var(--orange), #FFB155);
+}
+.progress-bar-fill.complete { background: linear-gradient(90deg, var(--green), #4ADE94); }
+.progress-note { font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
 
 /* ── MAIN CONTENT ── */
 .main { padding: 24px; max-width: 1200px; margin: 0 auto; }
@@ -286,6 +322,16 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   margin-top: 12px; width: 100%; padding: 10px;
   font-size: 12px; border-radius: 999px;
 }
+.group-save-bar {
+  position: sticky; bottom: 0;
+  margin-top: 8px; padding: 14px;
+  background: rgba(14,19,54,.92); backdrop-filter: blur(6px);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  box-shadow: 0 -6px 20px rgba(0,0,0,.25);
+}
+.group-save-bar .btn { width: 100%; padding: 14px; font-size: 14px; }
+.group-save-hint { font-size: 11px; color: var(--muted); text-align: center; }
 .result-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 12px; padding: 3px 10px; border-radius: 20px; margin-top: 10px;
@@ -408,8 +454,8 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 /* ── RESPONSIVE / MOBILE ── */
 
 /* Let the nav scroll horizontally with a hidden scrollbar on touch */
-.nav-wrap { position: relative; }
-.nav { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.nav-wrap { position: relative; background: #FFFFFF; width: 100%; }
+.nav { -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 100%; }
 .nav::-webkit-scrollbar { display: none; }
 /* The wordmark suffix (" · SAH NA Brackets") collapses on small screens */
 .logo .logo-sub { white-space: nowrap; }
@@ -627,6 +673,13 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       <span>Your contribution:</span>
       <span id="myContribBadge" class="contrib-badge contrib-no">Not received</span>
       <span style="color:var(--muted);font-size:12px">— the organizer marks this once your contribution is received.</span>
+    </div>
+
+    <div id="progressTracker" class="progress-tracker">
+      <div class="progress-tracker-title">📊 Your Prediction Progress</div>
+      <div class="progress-rows" id="progressRows">
+        <div class="loader" style="padding:8px"><div class="spinner"></div>Loading...</div>
+      </div>
     </div>
     <div id="phaseBanner" class="phase-banner">
       <div class="phase-icon">📋</div>
@@ -1344,11 +1397,109 @@ async function loadMatchCards() {
     resSnap.forEach(doc => { results[doc.id] = doc.data(); });
   } catch(e) {}
 
-  container.innerHTML = matches.map(m => buildMatchCard(m, userBets[m.id], results[m.id])).join("");
+  _currentBetMatches = matches;
+  _currentBetResults = results;
+  _allUserBets = userBets;
+  renderProgress(userBets, results);
+  const locked = !isBettingOpen();
+  const cardsHtml = matches.map(m => buildMatchCard(m, userBets[m.id], results[m.id])).join("");
+  const saveBar = locked ? "" : `
+    <div class="group-save-bar">
+      <button class="btn btn-gold" id="groupSaveBtn" onclick="saveGroupBets()">💾 Save All Predictions in This Group</button>
+      <span class="group-save-hint">Saves every match shown above at once. Blank matches are skipped.</span>
+    </div>`;
+  container.innerHTML = cardsHtml + saveBar;
+}
+
+let _currentBetMatches = [];
+let _currentBetResults = {};
+let _allUserBets = {};
+
+// Render the always-visible prediction progress tracker, broken out by phase.
+function renderProgress(userBets, results) {
+  const rows = document.getElementById("progressRows");
+  if(!rows) return;
+  results = results || {};
+
+  const phases = [
+    { key: "groups",    label: "Phase 1 — Classification", matches: GROUP_MATCHES },
+    { key: "knockouts", label: "Phase 2 — Brackets",       matches: KNOCKOUT_MATCHES }
+  ];
+
+  rows.innerHTML = phases.map(ph => {
+    const total = ph.matches.length;
+    let saved = 0, locked = 0;
+    ph.matches.forEach(m => {
+      const hasBet = userBets[m.id] && userBets[m.id].homeGoals !== undefined;
+      const hasResult = results[m.id] && results[m.id].homeGoals !== undefined;
+      if(hasBet) saved++;
+      if(hasResult) locked++;
+    });
+    const remaining = total - saved;
+    const pct = total ? Math.round((saved / total) * 100) : 0;
+    const isActive = activePhase === ph.key;
+    const complete = remaining === 0;
+
+    return `
+      <div class="progress-row">
+        <div class="progress-row-head">
+          <span class="progress-row-label">${ph.label}${isActive ? '<span class="active-pill">Active now</span>' : ''}</span>
+          <span class="progress-row-stats">
+            <span class="done">${saved}</span> / ${total} saved ·
+            ${remaining > 0 ? `<span class="remaining">${remaining} remaining</span>` : '<span class="done">All done ✓</span>'}
+          </span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar-fill ${complete ? "complete" : ""}" style="width:${pct}%"></div></div>
+      </div>`;
+  }).join("");
+
+  // Locked-match note if any results are in
+  const lockedTotal = ALL_MATCHES.filter(m => results[m.id] && results[m.id].homeGoals !== undefined).length;
+  rows.insertAdjacentHTML("beforeend",
+    `<div class="progress-note">Predictions save per group with the button at the bottom of the list.${lockedTotal ? ` ${lockedTotal} match${lockedTotal>1?"es are":" is"} locked (result already in).` : ""}</div>`);
+}
+
+async function saveGroupBets() {
+  if(isAdmin) return;
+  const btn = document.getElementById("groupSaveBtn");
+  if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+  let saved = 0, skipped = 0, errors = 0;
+  for(const m of _currentBetMatches) {
+    // Never write a prediction for a match whose official result is already in.
+    const res = _currentBetResults[m.id];
+    if(res && res.homeGoals !== undefined) { continue; }
+    const hEl = document.getElementById(`h_${m.id}`);
+    const aEl = document.getElementById(`a_${m.id}`);
+    if(!hEl || !aEl) continue;
+    const h = hEl.value, a = aEl.value;
+    if(h === "" || a === "") { skipped++; continue; }   // leave blank matches alone
+    try {
+      await db.collection("bets").doc(`${currentUser.uid}_${m.id}`).set({
+        userId: currentUser.uid,
+        userName: currentUser.displayName || currentUser.email,
+        matchId: m.id, homeTeam: m.homeTeam, awayTeam: m.awayTeam,
+        homeGoals: parseInt(h), awayGoals: parseInt(a),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      saved++;
+      _allUserBets[m.id] = { matchId: m.id, homeGoals: parseInt(h), awayGoals: parseInt(a) };
+      const card = document.getElementById(`card-${m.id}`);
+      if(card) { card.style.borderColor = "var(--green)"; }
+    } catch(e) { errors++; }
+  }
+  renderProgress(_allUserBets, _currentBetResults);
+  if(btn) { btn.disabled = false; btn.textContent = "💾 Save All Predictions in This Group"; }
+  if(errors) showToast(`Saved ${saved}, but ${errors} failed. Check your connection.`, "error");
+  else if(saved) showToast(`✅ Saved ${saved} prediction${saved>1?"s":""}${skipped?` · ${skipped} left blank`:""}`);
+  else showToast("Nothing to save — fill in some scores first.", "error");
+  setTimeout(() => { document.querySelectorAll(".match-card").forEach(c => c.style.borderColor = ""); }, 2000);
 }
 
 function buildMatchCard(match, bet, result) {
-  const locked = !isBettingOpen();
+  const hasResult = result && result.homeGoals !== undefined;
+  // Lock a match for betting if the phase is closed OR an official result is in.
+  // Once the real score exists, predictions can no longer be entered or changed.
+  const locked = !isBettingOpen() || hasResult;
   const homeGoals = bet ? bet.homeGoals : "";
   const awayGoals = bet ? bet.awayGoals : "";
   
@@ -1373,7 +1524,7 @@ function buildMatchCard(match, bet, result) {
     <div class="match-meta">
       <span class="tag">${match.group ? "Group "+match.group : (match.round||"")}</span>
       <span>📅 ${match.date || ""}</span>
-      ${locked ? '<span style="color:var(--red)">🔒 Betting Closed</span>' : ''}
+      ${hasResult ? '<span style="color:var(--green)">🔒 Result in — locked</span>' : (locked ? '<span style="color:var(--red)">🔒 Betting Closed</span>' : '')}
     </div>
     <div class="match-teams">
       <div class="team-name">
@@ -1391,7 +1542,6 @@ function buildMatchCard(match, bet, result) {
       </div>
     </div>
     ${resultHtml}
-    ${!locked ? `<button class="btn btn-gold save-match-btn" onclick="saveBet('${match.id}','${match.homeTeam}','${match.awayTeam}')">Save Prediction</button>` : ""}
   </div>`;
 }
 
@@ -1422,6 +1572,9 @@ function getResultBadge(pts) {
 }
 
 async function saveBet(matchId, homeTeam, awayTeam) {
+  // Block if the official result for this match is already in.
+  const res = _currentBetResults[matchId];
+  if(res && res.homeGoals !== undefined) { showToast("This match is locked — the result is already in.", "error"); return; }
   const hEl = document.getElementById(`h_${matchId}`);
   const aEl = document.getElementById(`a_${matchId}`);
   const hGoals = hEl.value;
@@ -1632,13 +1785,14 @@ async function loadAdminResults() {
         <span style="display:flex;align-items:center;gap:6px">${awayFlag} ${m.awayTeam}</span>
         <span style="margin-left:auto;font-size:11px;color:var(--muted)">📅 ${m.date||""}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
         <input class="result-input" type="number" min="0" max="20" id="rh_${m.id}" value="${hasResult?res.homeGoals:""}" placeholder="0" />
         <span style="color:var(--muted);font-weight:700">×</span>
         <input class="result-input" type="number" min="0" max="20" id="ra_${m.id}" value="${hasResult?res.awayGoals:""}" placeholder="0" />
         <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="saveResult('${m.id}','${m.homeTeam}','${m.awayTeam}')">
           ${hasResult ? "✏️ Update" : "💾 Save"}
         </button>
+        ${hasResult ? `<button class="btn btn-danger" style="padding:8px 14px;font-size:12px" onclick="deleteResult('${m.id}','${m.homeTeam.replace(/'/g,"\\'")} × ${m.awayTeam.replace(/'/g,"\\'")}')">🗑 Remove</button>` : ""}
         ${hasResult ? `<span style="font-size:12px;color:var(--green)">✅ ${res.homeGoals}×${res.awayGoals} recorded</span>` : ""}
       </div>
     </div>`;
@@ -1660,6 +1814,19 @@ async function saveResult(matchId, homeTeam, awayTeam) {
   } catch(e) {
     showToast("Error: " + e.message, "error");
   }
+}
+
+async function deleteResult(matchId, label) {
+  if(!isAdmin) return;
+  openModal(`Remove result for ${label}?`, "This deletes the official score for this match. Points that depended on it will be recalculated, and the match will show as not played again.", async () => {
+    try {
+      await db.collection("results").doc(matchId).delete();
+      showToast("🗑 Result removed.");
+      loadAdminResults();
+    } catch(e) {
+      showToast("Error: " + e.message, "error");
+    }
+  });
 }
 
 async function savePhaseConfig() {
