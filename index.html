@@ -301,6 +301,13 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   width: 30px; height: 20px; object-fit: cover; border-radius: 3px;
   box-shadow: 0 0 0 1px rgba(255,255,255,.18); display: inline-block; vertical-align: middle; flex-shrink: 0;
 }
+.flag-stack { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+.fifa-rank {
+  font-size: 9px; font-weight: 800; letter-spacing: .2px; line-height: 1.3;
+  color: var(--orange); background: rgba(232,115,12,.14);
+  border: 1px solid rgba(232,115,12,.30); border-radius: 4px;
+  padding: 1px 5px; white-space: nowrap;
+}
 .team-flag-tbd { font-size: 18px; opacity: .5; }
 .flag-abbr {
   display: inline-block; vertical-align: middle; flex-shrink: 0;
@@ -981,11 +988,33 @@ const FLAG_ABBR = {
 
 // Build a small rectangular flag <img> from flagcdn (renders identically on all
 // devices). If it fails to load, swap to a styled 3-letter abbreviation chip.
+// Official FIFA/Coca-Cola Men's World Ranking position (last official update:
+// 1 April 2026). Shown as a small chip under each flag.
+const FIFA_RANK = {
+  "France":1,"Spain":2,"Argentina":3,"England":4,"Portugal":5,
+  "Brazil":6,"Netherlands":7,"Morocco":8,"Belgium":9,"Germany":10,
+  "Croatia":11,"Colombia":13,"Senegal":14,"Mexico":15,"United States":16,
+  "Uruguay":17,"Japan":18,"Switzerland":19,"Iran":21,"Turkey":22,
+  "Ecuador":23,"Austria":24,"South Korea":25,"Australia":27,"Algeria":28,
+  "Egypt":29,"Canada":30,"Norway":31,"Panama":33,"Ivory Coast":34,
+  "Sweden":38,"Paraguay":40,"Czechia":41,"Scotland":43,"Tunisia":44,
+  "DR Congo":46,"Uzbekistan":50,"Qatar":55,"Iraq":57,"South Africa":60,
+  "Saudi Arabia":61,"Jordan":63,"Bosnia":65,"Cape Verde":69,"Ghana":74,
+  "Curacao":82,"Haiti":83,"New Zealand":85
+};
+
+// Small chip with the team's FIFA world-ranking position (empty for TBD slots).
+function fifaRankChip(team) {
+  const r = FIFA_RANK[team];
+  return r ? `<span class="fifa-rank" title="FIFA World Ranking — 1 Apr 2026">FIFA #${r}</span>` : '';
+}
+
 function flagImg(team) {
   const code = FLAG_CODES[team];
   if(!code) return `<span class="team-flag team-flag-tbd">🏳️</span>`;
   const abbr = FLAG_ABBR[team] || (team.slice(0,3).toUpperCase());
-  return `<img class="team-flag-img" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="${team}" loading="lazy" onerror="this.outerHTML='<span class=&quot;flag-abbr&quot;>${abbr}</span>'">`;
+  const img = `<img class="team-flag-img" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="${team}" loading="lazy" onerror="this.outerHTML='<span class=&quot;flag-abbr&quot;>${abbr}</span>'">`;
+  return `<span class="flag-stack">${img}${fifaRankChip(team)}</span>`;
 }
 
 // Approximate FIFA ranking points per team (factual rating data; used only to
