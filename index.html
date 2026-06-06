@@ -323,6 +323,54 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .sched-badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; }
 .sched-badge.done { background:rgba(46,204,113,.18); color:#37d67a; }
 .sched-badge.live { background:rgba(232,115,12,.18); color:var(--orange); }
+/* ── HOW TO PLAY / INSTRUCTIONS ── */
+.howto-hero { text-align:center; padding:14px 10px 22px; }
+.howto-hero-emoji { font-size:46px; line-height:1; margin-bottom:8px; }
+.howto-title { font-family:'Anton',sans-serif; font-size:30px; letter-spacing:.5px; color:#fff; line-height:1.05; margin:0 0 8px; }
+.howto-lead { color:var(--muted); font-size:15px; max-width:620px; margin:0 auto; }
+.howto-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px 24px; margin-bottom:16px; }
+.howto-h { display:flex; align-items:center; gap:12px; font-family:'Anton',sans-serif; font-size:20px; letter-spacing:.5px; color:#fff; margin-bottom:12px; }
+.howto-num { flex-shrink:0; width:30px; height:30px; border-radius:50%; background:var(--orange); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.howto-p { color:#dfe3f7; font-size:14px; line-height:1.55; margin:0 0 14px; }
+.howto-p strong, .step strong, .howto-note strong { color:#fff; }
+.howto-note { color:var(--muted); font-size:13px; line-height:1.5; margin:14px 0 0; padding-top:12px; border-top:1px solid var(--border); }
+.phase-grid, .lock-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.phase-box { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:16px; }
+.phase-tag { display:inline-block; font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:3px 9px; border-radius:20px; margin-bottom:8px; }
+.phase-tag.p1 { background:rgba(66,86,232,.25); color:#9fb0ff; }
+.phase-tag.p2 { background:rgba(232,115,12,.2); color:var(--orange); }
+.phase-name { font-family:'Anton',sans-serif; font-size:20px; color:#fff; letter-spacing:.5px; }
+.phase-dates { color:var(--orange); font-weight:700; font-size:13px; margin:6px 0 8px; }
+.phase-desc { color:#dfe3f7; font-size:13px; line-height:1.5; }
+.step { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06); color:#dfe3f7; font-size:14px; line-height:1.5; }
+.step:last-of-type { border-bottom:none; }
+.step-ico { flex-shrink:0; font-size:22px; width:34px; text-align:center; }
+.lock-box { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; text-align:center; }
+.lock-phase { font-size:12px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+.lock-when { font-family:'Anton',sans-serif; font-size:22px; color:#fff; margin-top:4px; }
+.lock-when span { display:block; font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; color:var(--muted); letter-spacing:0; }
+.prize-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.prize-box { border-radius:14px; padding:18px 10px; text-align:center; border:1px solid var(--border); background:var(--card2); }
+.prize-box.gold { border-color:rgba(255,196,0,.5); background:rgba(255,196,0,.08); }
+.prize-box.silver { border-color:rgba(199,210,230,.45); background:rgba(199,210,230,.07); }
+.prize-box.bronze { border-color:rgba(205,127,50,.5); background:rgba(205,127,50,.08); }
+.prize-medal { font-size:30px; line-height:1; }
+.prize-pct { font-family:'Anton',sans-serif; font-size:30px; color:#fff; margin:6px 0 2px; }
+.prize-lbl { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.score-table { display:flex; flex-direction:column; gap:8px; }
+.score-row { display:flex; align-items:center; gap:14px; background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+.score-row.miss { opacity:.7; }
+.score-pts { flex-shrink:0; width:42px; height:42px; border-radius:10px; background:var(--orange); color:#fff; font-family:'Anton',sans-serif; font-size:20px; display:flex; align-items:center; justify-content:center; }
+.score-row.miss .score-pts { background:#3a3f63; }
+.score-ico { font-size:20px; }
+.score-desc { color:#dfe3f7; font-size:14px; line-height:1.4; }
+.howto-cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:6px 0 10px; }
+.howto-go { font-size:15px; padding:14px 26px; }
+@media (max-width:560px) {
+  .phase-grid, .lock-grid, .prize-grid { grid-template-columns:1fr; }
+  .howto-title { font-size:24px; }
+  .howto-card { padding:18px 16px; }
+}
 @media (max-width: 560px) {
   .sched-row { grid-template-columns: 1fr; }
   .sched-kick { flex-direction:row; gap:8px; align-items:center; }
@@ -643,6 +691,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 <!-- NAV TABS -->
 <div class="nav-wrap" id="mainNav" style="display:none">
 <nav class="nav">
+  <div class="nav-tab" data-page="instructions" onclick="showPage('instructions')">📖 How to Play</div>
   <div class="nav-tab active" data-page="bets" onclick="showPage('bets')">⚽ My Bets</div>
   <div class="nav-tab" data-page="results" onclick="showPage('results')">📊 Results</div>
     <div class="nav-tab" data-page="schedule" onclick="showPage('schedule')">📅 Calendar</div>
@@ -700,6 +749,92 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <p class="login-switch">Already have an account? <a onclick="toggleRegister(false)">Sign In</a></p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ INSTRUCTIONS ═══ -->
+<div id="page-instructions" class="page">
+  <div class="main">
+
+    <div class="howto-hero">
+      <div class="howto-hero-emoji">🏆</div>
+      <h1 class="howto-title">Welcome to the SAH NA World Cup '26 Pool</h1>
+      <p class="howto-lead">Predict the scores, climb the leaderboard, and win the pot. Here's everything you need to know before you start.</p>
+    </div>
+
+    <!-- TWO PHASES -->
+    <div class="howto-card">
+      <div class="howto-h"><span class="howto-num">1</span> Two phases, two competitions</div>
+      <p class="howto-p">The pool runs in <strong>two separate phases</strong>. Each phase is its own contest — its own pot, its own winners. You can play one or both.</p>
+      <div class="phase-grid">
+        <div class="phase-box">
+          <div class="phase-tag p1">Phase 1 · Group Stage</div>
+          <div class="phase-name">Classification</div>
+          <div class="phase-dates">📅 Jun 11 → Jun 27, 2026</div>
+          <div class="phase-desc">Predict the exact score of all <strong>72 group-stage matches</strong>.</div>
+        </div>
+        <div class="phase-box">
+          <div class="phase-tag p2">Phase 2 · Knockout</div>
+          <div class="phase-name">Brackets</div>
+          <div class="phase-dates">📅 Jun 28 → Jul 19, 2026</div>
+          <div class="phase-desc">Predict the <strong>knockout bracket</strong> — who advances all the way to the final.</div>
+        </div>
+      </div>
+      <p class="howto-note">We close the competition at the end of each phase and crown that phase's winners before the next one begins.</p>
+    </div>
+
+    <!-- HOW TO PREDICT -->
+    <div class="howto-card">
+      <div class="howto-h"><span class="howto-num">2</span> How to make your predictions</div>
+      <p class="howto-p">Go to the <strong>⚽ My Bets</strong> tab and pick a group. You have two ways to fill it in:</p>
+      <div class="step"><div class="step-ico">✍️</div><div><strong>Match by match</strong> — type your predicted score into the two boxes for each game (e.g. 2 × 1).</div></div>
+      <div class="step"><div class="step-ico">🤖</div><div><strong>Auto-Predict by FIFA Ranking</strong> — one tap fills every empty match with a sensible score based on the FIFA world ranking. Each player gets their <em>own</em> set, so no two brackets are identical. Review, tweak whatever you want, then save. It never overwrites scores you've already typed.</div></div>
+      <div class="step"><div class="step-ico">💾</div><div><strong>Save each group</strong> with the <em>“Save all predictions in this group”</em> button at the bottom of the list. Your progress bar at the top tracks how many of the 72 you've saved.</div></div>
+      <p class="howto-note">Tip: the FIFA world-ranking position is shown under each team's flag to help you judge the matchup.</p>
+    </div>
+
+    <!-- DEADLINES -->
+    <div class="howto-card">
+      <div class="howto-h"><span class="howto-num">3</span> Deadlines &amp; locking</div>
+      <p class="howto-p">You can submit and edit your predictions until <strong>24 hours before each phase begins</strong>. After that, the phase locks and no further changes are accepted.</p>
+      <div class="lock-grid">
+        <div class="lock-box"><div class="lock-phase">Phase 1 locks</div><div class="lock-when">≈ Jun 10 <span>(24h before kickoff)</span></div></div>
+        <div class="lock-box"><div class="lock-phase">Phase 2 locks</div><div class="lock-when">≈ Jun 27 <span>(24h before knockouts)</span></div></div>
+      </div>
+      <p class="howto-note">Once a match's official result is entered, that individual prediction is locked automatically.</p>
+    </div>
+
+    <!-- BUY-IN & PRIZES -->
+    <div class="howto-card">
+      <div class="howto-h"><span class="howto-num">4</span> Buy-in &amp; prizes</div>
+      <p class="howto-p">Entry is <strong>$20 USD per person, per phase</strong>. Everyone's $20 goes into that phase's pot, and the top three on that phase's leaderboard split it:</p>
+      <div class="prize-grid">
+        <div class="prize-box gold"><div class="prize-medal">🥇</div><div class="prize-pct">60%</div><div class="prize-lbl">1st place</div></div>
+        <div class="prize-box silver"><div class="prize-medal">🥈</div><div class="prize-pct">30%</div><div class="prize-lbl">2nd place</div></div>
+        <div class="prize-box bronze"><div class="prize-medal">🥉</div><div class="prize-pct">10%</div><div class="prize-lbl">3rd place</div></div>
+      </div>
+      <p class="howto-note">Example: 10 players in a phase → $200 pot → <strong>$120 / $60 / $20</strong> to 1st / 2nd / 3rd. Each phase is paid out separately.</p>
+    </div>
+
+    <!-- SCORING -->
+    <div class="howto-card">
+      <div class="howto-h"><span class="howto-num">5</span> How points are scored</div>
+      <p class="howto-p">Every match prediction earns points based on how close you were:</p>
+      <div class="score-table">
+        <div class="score-row"><span class="score-pts">15</span><span class="score-ico">🎯</span><span class="score-desc"><strong>Exact score</strong> — right winner and both teams' goals</span></div>
+        <div class="score-row"><span class="score-pts">7</span><span class="score-ico">✅</span><span class="score-desc"><strong>Right winner + one team's goals</strong> correct</span></div>
+        <div class="score-row"><span class="score-pts">4</span><span class="score-ico">👍</span><span class="score-desc"><strong>Right winner</strong> only (wrong scores)</span></div>
+        <div class="score-row"><span class="score-pts">3</span><span class="score-ico">➕</span><span class="score-desc">One team's goals correct, but <strong>wrong winner</strong></span></div>
+        <div class="score-row miss"><span class="score-pts">0</span><span class="score-ico">❌</span><span class="score-desc">Missed it</span></div>
+      </div>
+      <p class="howto-note">Point values are set by the organizer and may be adjusted before a phase starts. Highest total on the leaderboard wins the phase.</p>
+    </div>
+
+    <div class="howto-cta">
+      <button class="btn btn-accent howto-go" onclick="showPage('bets')">Got it — start predicting →</button>
+      <button class="btn btn-ghost" onclick="showPage('schedule')">📅 See the match calendar</button>
+    </div>
+
   </div>
 </div>
 
@@ -1406,7 +1541,7 @@ async function onAuthChange(user) {
     if(isAdmin) {
       showPage("admin-results");   // admins land on their control panel, not betting
     } else {
-      showPage("bets");
+      showPage("instructions");   // players land on the welcome / rules screen first
       loadBets();
     }
   } else {
