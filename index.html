@@ -308,6 +308,27 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   border: 1px solid rgba(232,115,12,.30); border-radius: 4px;
   padding: 1px 5px; white-space: nowrap;
 }
+.sched-day { margin-bottom: 22px; }
+.sched-day-head { font-family:'Anton',sans-serif; font-size:18px; letter-spacing:.5px; color:#fff; background:var(--navy); border:1px solid var(--border); border-radius:10px; padding:9px 14px; margin-bottom:10px; }
+.sched-row { display:grid; grid-template-columns: 96px 1fr; gap:8px 14px; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:8px; }
+.sched-row.has-score { border-color: rgba(46,204,113,.45); }
+.sched-kick { font-weight:800; color:var(--orange); font-size:14px; display:flex; flex-direction:column; gap:3px; }
+.sched-grp { font-size:10px; font-weight:700; color:var(--muted); }
+.sched-match { display:flex; align-items:center; gap:12px; }
+.sched-mid { min-width:84px; text-align:center; }
+.sched-time { font-family:'Anton',sans-serif; font-size:18px; color:var(--muted); }
+.sched-score { font-family:'Anton',sans-serif; font-size:22px; color:#fff; white-space:nowrap; }
+.sched-score .x { color:var(--muted); font-size:14px; }
+.sched-venue { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--border); padding-top:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.sched-badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; }
+.sched-badge.done { background:rgba(46,204,113,.18); color:#37d67a; }
+.sched-badge.live { background:rgba(232,115,12,.18); color:var(--orange); }
+@media (max-width: 560px) {
+  .sched-row { grid-template-columns: 1fr; }
+  .sched-kick { flex-direction:row; gap:8px; align-items:center; }
+  .sched-match { gap:8px; }
+  .sched-mid { min-width:64px; }
+}
 .team-flag-tbd { font-size: 18px; opacity: .5; }
 .flag-abbr {
   display: inline-block; vertical-align: middle; flex-shrink: 0;
@@ -624,6 +645,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 <nav class="nav">
   <div class="nav-tab active" data-page="bets" onclick="showPage('bets')">⚽ My Bets</div>
   <div class="nav-tab" data-page="results" onclick="showPage('results')">📊 Results</div>
+    <div class="nav-tab" data-page="schedule" onclick="showPage('schedule')">📅 Calendar</div>
   <div class="nav-tab" data-page="scoreboard" onclick="showPage('scoreboard')">🏆 Leaderboard</div>
   <div class="nav-tab admin-only" data-page="admin-results" onclick="showPage('admin-results')" style="display:none">📋 Enter Results</div>
   <div class="nav-tab admin-only" data-page="admin-users" onclick="showPage('admin-users')" style="display:none">👥 Members</div>
@@ -717,7 +739,20 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 </div>
 
 <!-- ═══════════════════════════════════ PUBLIC RESULTS ══ -->
-<div id="page-results" class="page">
+<div id="page-schedule" class="page">
+    <div class="main">
+      <div class="section-header">
+        <div>
+          <div class="section-title">📅 Match Calendar</div>
+          <div class="section-sub">Group stage fixtures · times shown in your local zone (<span id="schedTZ"></span>)</div>
+        </div>
+        <button class="btn btn-ghost" onclick="renderSchedule(true)">↻ Refresh scores</button>
+      </div>
+      <div id="scheduleList"><div class="loader"><div class="spinner"></div>Loading...</div></div>
+    </div>
+  </div>
+
+  <div id="page-results" class="page">
   <div class="main">
     <div class="section-header">
       <div>
@@ -1034,7 +1069,28 @@ const FIFA_RATING = {
 
 // Turn a rating gap into a plausible scoreline. Stronger team wins by a margin
 // that grows with the gap; close ratings lean toward a draw.
-function predictScore(home, away) {
+// Deterministic PRNG so each player gets a *different but stable* set of
+// auto-predictions. Seeded by uid+matchId: varies between people, identical on
+// reload for the same person (no re-rolling), and never two identical brackets.
+function _hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function _mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// Score prediction. The rating gap sets a sensible BASELINE (stronger team
+// favored); a seeded jitter then nudges the exact scoreline per player so
+// everyone's auto-predictions differ while staying plausible. Omit seedKey for
+// the plain deterministic baseline.
+function predictScore(home, away, seedKey) {
   const rh = FIFA_RATING[home] || 1450;
   const ra = FIFA_RATING[away] || 1450;
   const diff = rh - ra;
@@ -1045,8 +1101,25 @@ function predictScore(home, away) {
   else if(a < 160) { strongGoals = 2; weakGoals = 0; }
   else if(a < 240) { strongGoals = 3; weakGoals = 1; }
   else             { strongGoals = 3; weakGoals = 0; }
-  if(diff >= 0) return { home: strongGoals, away: weakGoals };
-  return { home: weakGoals, away: strongGoals };
+  let bh, ba;
+  if(diff >= 0) { bh = strongGoals; ba = weakGoals; }
+  else          { bh = weakGoals;   ba = strongGoals; }
+
+  if(!seedKey) return { home: bh, away: ba };
+
+  const rng = _mulberry32(_hashSeed(seedKey));
+  // jitter weights centered near 0: mostly keeps the baseline, sometimes a goal
+  // more/less, occasionally a bigger swing — produces variety and upsets.
+  const jit = () => {
+    const r = rng();
+    if(r < 0.24) return -1;
+    if(r < 0.68) return 0;
+    if(r < 0.92) return 1;
+    return 2;
+  };
+  const h = Math.max(0, Math.min(8, bh + jit()));
+  const w = Math.max(0, Math.min(8, ba + jit()));
+  return { home: h, away: w };
 }
 
 const GROUPS = {
@@ -1102,6 +1175,95 @@ const GROUP_MATCHES = (() => {
   });
   return matches;
 })();
+
+// ── FIXTURE SCHEDULE (kickoff times in ET, stored with -04:00 so the browser
+// renders each one in the VIEWER'S OWN time zone automatically) + venues. ──
+const MATCH_INFO = {
+  "Mexico|South Africa":{k:"2026-06-11T15:00:00-04:00",v:"Estadio Azteca",c:"Mexico City"},
+  "Czechia|South Korea":{k:"2026-06-11T22:00:00-04:00",v:"Estadio Akron",c:"Zapopan"},
+  "Bosnia|Canada":{k:"2026-06-12T15:00:00-04:00",v:"BMO Field",c:"Toronto"},
+  "Paraguay|United States":{k:"2026-06-12T21:00:00-04:00",v:"SoFi Stadium",c:"Inglewood"},
+  "Qatar|Switzerland":{k:"2026-06-13T15:00:00-04:00",v:"Levi\'s Stadium",c:"Santa Clara"},
+  "Brazil|Morocco":{k:"2026-06-13T18:00:00-04:00",v:"MetLife Stadium",c:"East Rutherford"},
+  "Haiti|Scotland":{k:"2026-06-13T21:00:00-04:00",v:"Gillette Stadium",c:"Foxborough"},
+  "Australia|Turkey":{k:"2026-06-14T00:00:00-04:00",v:"BC Place",c:"Vancouver"},
+  "Curacao|Germany":{k:"2026-06-14T13:00:00-04:00",v:"NRG Stadium",c:"Houston"},
+  "Japan|Netherlands":{k:"2026-06-14T16:00:00-04:00",v:"AT&T Stadium",c:"Arlington"},
+  "Ecuador|Ivory Coast":{k:"2026-06-14T19:00:00-04:00",v:"Lincoln Financial Field",c:"Philadelphia"},
+  "Sweden|Tunisia":{k:"2026-06-14T22:00:00-04:00",v:"Estadio BBVA",c:"Monterrey"},
+  "Cape Verde|Spain":{k:"2026-06-15T12:00:00-04:00",v:"Mercedes-Benz Stadium",c:"Atlanta"},
+  "Belgium|Egypt":{k:"2026-06-15T15:00:00-04:00",v:"Lumen Field",c:"Seattle"},
+  "Saudi Arabia|Uruguay":{k:"2026-06-15T18:00:00-04:00",v:"Hard Rock Stadium",c:"Miami Gardens"},
+  "Iran|New Zealand":{k:"2026-06-15T21:00:00-04:00",v:"SoFi Stadium",c:"Inglewood"},
+  "France|Senegal":{k:"2026-06-16T15:00:00-04:00",v:"MetLife Stadium",c:"East Rutherford"},
+  "Iraq|Norway":{k:"2026-06-16T18:00:00-04:00",v:"Gillette Stadium",c:"Foxborough"},
+  "Algeria|Argentina":{k:"2026-06-16T21:00:00-04:00",v:"Arrowhead Stadium",c:"Kansas City"},
+  "Austria|Jordan":{k:"2026-06-17T00:00:00-04:00",v:"Levi\'s Stadium",c:"Santa Clara"},
+  "DR Congo|Portugal":{k:"2026-06-17T13:00:00-04:00",v:"NRG Stadium",c:"Houston"},
+  "Croatia|England":{k:"2026-06-17T16:00:00-04:00",v:"AT&T Stadium",c:"Arlington"},
+  "Ghana|Panama":{k:"2026-06-17T19:00:00-04:00",v:"BMO Field",c:"Toronto"},
+  "Colombia|Uzbekistan":{k:"2026-06-17T22:00:00-04:00",v:"Estadio Azteca",c:"Mexico City"},
+  "Czechia|South Africa":{k:"2026-06-18T12:00:00-04:00",v:"Mercedes-Benz Stadium",c:"Atlanta"},
+  "Bosnia|Switzerland":{k:"2026-06-18T15:00:00-04:00",v:"SoFi Stadium",c:"Inglewood"},
+  "Canada|Qatar":{k:"2026-06-18T18:00:00-04:00",v:"BC Place",c:"Vancouver"},
+  "Mexico|South Korea":{k:"2026-06-18T21:00:00-04:00",v:"Estadio Akron",c:"Zapopan"},
+  "Australia|United States":{k:"2026-06-19T15:00:00-04:00",v:"Lumen Field",c:"Seattle"},
+  "Morocco|Scotland":{k:"2026-06-19T18:00:00-04:00",v:"Gillette Stadium",c:"Foxborough"},
+  "Brazil|Haiti":{k:"2026-06-19T20:30:00-04:00",v:"Lincoln Financial Field",c:"Philadelphia"},
+  "Paraguay|Turkey":{k:"2026-06-19T23:00:00-04:00",v:"Levi\'s Stadium",c:"Santa Clara"},
+  "Netherlands|Sweden":{k:"2026-06-20T13:00:00-04:00",v:"NRG Stadium",c:"Houston"},
+  "Germany|Ivory Coast":{k:"2026-06-20T16:00:00-04:00",v:"BMO Field",c:"Toronto"},
+  "Curacao|Ecuador":{k:"2026-06-20T20:00:00-04:00",v:"Arrowhead Stadium",c:"Kansas City"},
+  "Japan|Tunisia":{k:"2026-06-21T00:00:00-04:00",v:"Estadio BBVA",c:"Monterrey"},
+  "Saudi Arabia|Spain":{k:"2026-06-21T12:00:00-04:00",v:"Mercedes-Benz Stadium",c:"Atlanta"},
+  "Belgium|Iran":{k:"2026-06-21T15:00:00-04:00",v:"SoFi Stadium",c:"Inglewood"},
+  "Cape Verde|Uruguay":{k:"2026-06-21T18:00:00-04:00",v:"Hard Rock Stadium",c:"Miami Gardens"},
+  "Egypt|New Zealand":{k:"2026-06-21T21:00:00-04:00",v:"BC Place",c:"Vancouver"},
+  "Argentina|Austria":{k:"2026-06-22T13:00:00-04:00",v:"AT&T Stadium",c:"Arlington"},
+  "France|Iraq":{k:"2026-06-22T17:00:00-04:00",v:"Lincoln Financial Field",c:"Philadelphia"},
+  "Norway|Senegal":{k:"2026-06-22T20:00:00-04:00",v:"MetLife Stadium",c:"East Rutherford"},
+  "Algeria|Jordan":{k:"2026-06-22T23:00:00-04:00",v:"Levi\'s Stadium",c:"Santa Clara"},
+  "Portugal|Uzbekistan":{k:"2026-06-23T13:00:00-04:00",v:"NRG Stadium",c:"Houston"},
+  "England|Ghana":{k:"2026-06-23T16:00:00-04:00",v:"Gillette Stadium",c:"Foxborough"},
+  "Croatia|Panama":{k:"2026-06-23T19:00:00-04:00",v:"BMO Field",c:"Toronto"},
+  "Colombia|DR Congo":{k:"2026-06-23T22:00:00-04:00",v:"Estadio Akron",c:"Zapopan"},
+  "Canada|Switzerland":{k:"2026-06-24T15:00:00-04:00",v:"BC Place",c:"Vancouver"},
+  "Bosnia|Qatar":{k:"2026-06-24T15:00:00-04:00",v:"Lumen Field",c:"Seattle"},
+  "Brazil|Scotland":{k:"2026-06-24T18:00:00-04:00",v:"Hard Rock Stadium",c:"Miami Gardens"},
+  "Haiti|Morocco":{k:"2026-06-24T18:00:00-04:00",v:"Mercedes-Benz Stadium",c:"Atlanta"},
+  "Czechia|Mexico":{k:"2026-06-24T21:00:00-04:00",v:"Estadio Azteca",c:"Mexico City"},
+  "South Africa|South Korea":{k:"2026-06-24T21:00:00-04:00",v:"Estadio BBVA",c:"Monterrey"},
+  "Curacao|Ivory Coast":{k:"2026-06-25T16:00:00-04:00",v:"Lincoln Financial Field",c:"Philadelphia"},
+  "Ecuador|Germany":{k:"2026-06-25T16:00:00-04:00",v:"MetLife Stadium",c:"East Rutherford"},
+  "Japan|Sweden":{k:"2026-06-25T19:00:00-04:00",v:"AT&T Stadium",c:"Arlington"},
+  "Netherlands|Tunisia":{k:"2026-06-25T19:00:00-04:00",v:"Arrowhead Stadium",c:"Kansas City"},
+  "Turkey|United States":{k:"2026-06-25T22:00:00-04:00",v:"SoFi Stadium",c:"Inglewood"},
+  "Australia|Paraguay":{k:"2026-06-25T22:00:00-04:00",v:"Levi\'s Stadium",c:"Santa Clara"},
+  "France|Norway":{k:"2026-06-26T15:00:00-04:00",v:"Gillette Stadium",c:"Foxborough"},
+  "Iraq|Senegal":{k:"2026-06-26T15:00:00-04:00",v:"BMO Field",c:"Toronto"},
+  "Cape Verde|Saudi Arabia":{k:"2026-06-26T20:00:00-04:00",v:"NRG Stadium",c:"Houston"},
+  "Spain|Uruguay":{k:"2026-06-26T20:00:00-04:00",v:"Estadio Akron",c:"Zapopan"},
+  "Egypt|Iran":{k:"2026-06-26T23:00:00-04:00",v:"Lumen Field",c:"Seattle"},
+  "Belgium|New Zealand":{k:"2026-06-26T23:00:00-04:00",v:"BC Place",c:"Vancouver"},
+  "England|Panama":{k:"2026-06-27T17:00:00-04:00",v:"MetLife Stadium",c:"East Rutherford"},
+  "Croatia|Ghana":{k:"2026-06-27T17:00:00-04:00",v:"Lincoln Financial Field",c:"Philadelphia"},
+  "Colombia|Portugal":{k:"2026-06-27T19:30:00-04:00",v:"Hard Rock Stadium",c:"Miami Gardens"},
+  "DR Congo|Uzbekistan":{k:"2026-06-27T19:30:00-04:00",v:"Mercedes-Benz Stadium",c:"Atlanta"},
+  "Algeria|Austria":{k:"2026-06-27T22:00:00-04:00",v:"Arrowhead Stadium",c:"Kansas City"},
+  "Argentina|Jordan":{k:"2026-06-27T22:00:00-04:00",v:"AT&T Stadium",c:"Arlington"}
+};
+// Display helpers — all render in the viewer's local time zone.
+function fmtKick(iso){ if(!iso) return ""; try{ return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }catch(e){ return ""; } }
+function fmtDateShort(iso){ if(!iso) return ""; try{ return new Date(iso).toLocaleDateString([], {month:"short", day:"numeric"}); }catch(e){ return ""; } }
+function fmtDayHeader(iso){ try{ return new Date(iso).toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"}); }catch(e){ return ""; } }
+function localDayKey(iso){ const d=new Date(iso); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function localTZLabel(){ try{ const tz=Intl.DateTimeFormat().resolvedOptions().timeZone; const abbr=new Intl.DateTimeFormat([], {timeZoneName:"short"}).formatToParts(new Date()).find(p=>p.type==="timeZoneName")?.value||""; return abbr?abbr+" \u00b7 "+tz:tz; }catch(e){ return ""; } }
+
+// Attach kickoff / venue / city to each group match (also fixes placeholder dates).
+GROUP_MATCHES.forEach(m => {
+  const info = MATCH_INFO[[m.homeTeam, m.awayTeam].sort().join("|")];
+  if(info){ m.kickoff = info.k; m.venue = info.v; m.city = info.c; m.date = fmtDateShort(info.k); }
+});
 
 // Knockout stage placeholder matches
 const KNOCKOUT_MATCHES = [
@@ -1383,6 +1545,63 @@ function toggleRegister(show) {
 // ═══════════════════════════════════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════════════════════════════════
+let _schedResults = null;
+async function renderSchedule(forceReload) {
+  const tzEl = document.getElementById("schedTZ");
+  if(tzEl) tzEl.textContent = localTZLabel();
+  const list = document.getElementById("scheduleList");
+  if(!list) return;
+
+  if(_schedResults === null || forceReload) {
+    list.innerHTML = `<div class="loader"><div class="spinner"></div>Loading...</div>`;
+    try {
+      const snap = await db.collection("results").get();
+      _schedResults = {};
+      snap.forEach(doc => { _schedResults[doc.id] = doc.data(); });
+    } catch(e) {
+      _schedResults = (typeof _pubResultsCache !== "undefined" && _pubResultsCache) ? _pubResultsCache : {};
+    }
+  }
+  const res = _schedResults || {};
+
+  const byDay = {};
+  GROUP_MATCHES.filter(m => m.kickoff).forEach(m => {
+    const k = localDayKey(m.kickoff);
+    (byDay[k] = byDay[k] || []).push(m);
+  });
+  const days = Object.keys(byDay).sort();
+  if(!days.length) { list.innerHTML = `<div style="padding:20px;color:var(--muted)">No fixtures.</div>`; return; }
+
+  const now = Date.now();
+  let html = "";
+  for(const day of days) {
+    const ms = byDay[day].sort((a,b) => new Date(a.kickoff) - new Date(b.kickoff));
+    html += `<div class="sched-day"><div class="sched-day-head">${fmtDayHeader(ms[0].kickoff)}</div>`;
+    for(const m of ms) {
+      const r = res[m.id];
+      const has = r && r.homeGoals !== undefined;
+      const started = new Date(m.kickoff).getTime() <= now;
+      const mid = has
+        ? `<span class="sched-score">${r.homeGoals} <span class="x">×</span> ${r.awayGoals}</span>`
+        : `<span class="sched-time">${fmtKick(m.kickoff)}</span>`;
+      const status = has ? `<span class="sched-badge done">Full time</span>`
+                    : (started ? `<span class="sched-badge live">Kicked off</span>` : "");
+      html += `
+      <div class="sched-row${has ? " has-score" : ""}">
+        <div class="sched-kick">${fmtKick(m.kickoff)}<span class="sched-grp">Group ${m.group}</span></div>
+        <div class="sched-match">
+          <div class="team-name">${flagImg(m.homeTeam)} <span>${m.homeTeam}</span></div>
+          <div class="sched-mid">${mid}</div>
+          <div class="team-name right"><span>${m.awayTeam}</span> ${flagImg(m.awayTeam)}</div>
+        </div>
+        <div class="sched-venue">📍 ${m.venue ? m.venue + " · " : ""}${m.city || ""} ${status}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  list.innerHTML = html;
+}
+
 function showPage(page) {
   // Guard admin-only pages
   const adminPages = ["admin-results","admin-users","admin-invites","admin-points"];
@@ -1398,6 +1617,7 @@ function showPage(page) {
   if(tab) tab.classList.add("active");
 
   if(page === "results") loadPublicResults();
+  if(page === "schedule") renderSchedule();
   if(page === "scoreboard") loadScoreboard();
   if(page === "admin-users") loadUsers();
   if(page === "admin-results") { buildResultGroupTabs(); loadAdminResults(); loadPointsConfig(); }
@@ -1541,7 +1761,7 @@ function autoPredictGroup() {
     const aEl = document.getElementById(`a_${m.id}`);
     if(!hEl || !aEl) continue;
     if(hEl.value !== "" || aEl.value !== "") { skippedFilled++; continue; }  // don't overwrite user input
-    const pred = predictScore(m.homeTeam, m.awayTeam);
+    const pred = predictScore(m.homeTeam, m.awayTeam, `${(currentUser&&currentUser.uid)||"anon"}_${m.id}`);
     hEl.value = pred.home;
     aEl.value = pred.away;
     filled++;
@@ -1618,7 +1838,8 @@ function buildMatchCard(match, bet, result) {
   <div class="match-card${locked ? " locked" : ""}" id="card-${match.id}">
     <div class="match-meta">
       <span class="tag">${match.group ? "Group "+match.group : (match.round||"")}</span>
-      <span>📅 ${match.date || ""}</span>
+      <span>📅 ${match.date || ""}${match.kickoff ? " · "+fmtKick(match.kickoff) : ""}</span>
+      ${match.city ? `<span>📍 ${match.city}</span>` : ""}
       ${hasResult ? '<span style="color:var(--green)">🔒 Result in — locked</span>' : (locked ? '<span style="color:var(--red)">🔒 Betting Closed</span>' : '')}
     </div>
     <div class="match-teams">
@@ -1803,7 +2024,8 @@ function renderPublicResults() {
     <div class="match-card">
       <div class="match-meta">
         <span class="tag">${m.group ? "Group "+m.group : (m.round||"")}</span>
-        <span>📅 ${m.date||""}</span>
+        <span>📅 ${m.date||""}${m.kickoff ? " · "+fmtKick(m.kickoff) : ""}</span>
+        ${m.city ? `<span>📍 ${m.city}</span>` : ""}
       </div>
       <div class="match-teams">
         <div class="team-name">${hf} ${m.homeTeam}</div>
