@@ -232,6 +232,10 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .login-err { color: #FF7A88; font-size: 13px; margin-top: 12px; min-height: 20px; }
 .login-switch { color: var(--muted); font-size: 13px; margin-top: 20px; }
 .login-switch a { color: var(--orange); cursor: pointer; text-decoration: none; font-weight: 700; }
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { width: 100%; padding-right: 44px; }
+.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1; padding: 6px; opacity: .7; }
+.pw-eye:hover { opacity: 1; }
 
 /* ── SECTION HEADERS ── */
 .section-header {
@@ -466,6 +470,7 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   font-weight: 800; font-size: 14px; flex-shrink: 0;
 }
 .comp-cell { display:flex; flex-direction:column; gap:6px; min-width:195px; }
+.admin-cell { display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--muted); font-style:italic; }
 .comp-row { display:flex; align-items:center; gap:8px; }
 .comp-ph { font-size:10px; font-weight:800; letter-spacing:.3px; width:24px; text-align:center; border-radius:5px; padding:2px 0; }
 .comp-ph.p1 { background:rgba(66,86,232,.25); color:#9fb0ff; }
@@ -726,33 +731,60 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       <p>Predict the scores and compete with your colleagues!</p>
 
       <div id="loginForm">
+        <div id="loginNotice" style="display:none;background:rgba(22,179,100,.15);border:1px solid rgba(22,179,100,.4);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#4ADE94;"></div>
         <div class="input-group">
           <label>Email</label>
-          <input type="email" id="loginEmail" placeholder="your@email.com" />
+          <input type="email" id="loginEmail" placeholder="you@3day.com" />
         </div>
         <div class="input-group">
           <label>Password</label>
-          <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+          <div class="pw-wrap">
+            <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+            <button type="button" class="pw-eye" onclick="togglePw('loginPassword',this)" aria-label="Show password">👁</button>
+          </div>
         </div>
         <button class="btn btn-gold login-btn" onclick="doLogin()">Sign In</button>
         <div class="login-err" id="loginErr"></div>
         <p class="login-switch">No account yet? <a onclick="toggleRegister(true)">Create one</a></p>
       </div>
 
+      <div id="verifyGate" style="display:none">
+        <div style="text-align:center;font-size:40px;margin-bottom:10px">📧</div>
+        <h3 style="text-align:center;font-family:'Anton',sans-serif;letter-spacing:.5px;margin-bottom:8px">Verify your email</h3>
+        <p style="text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:18px">
+          We sent a verification link to <strong id="verifyEmail" style="color:#fff"></strong>.
+          Open it to confirm your address, then come back and continue.
+        </p>
+        <button class="btn btn-gold login-btn" onclick="checkVerified()">I've verified — continue</button>
+        <button class="btn btn-ghost login-btn" style="margin-top:8px" onclick="resendVerification()">Resend link</button>
+        <p class="login-switch" style="text-align:center"><a onclick="logout()">Use a different account</a></p>
+      </div>
+
       <div id="registerForm" style="display:none">
         <div id="inviteNotice" style="display:none;background:rgba(22,179,100,.15);border:1px solid rgba(22,179,100,.4);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#4ADE94;">✓ Valid invite — you can join the pool</div>
         <div id="noInviteNotice" style="display:none;background:rgba(240,56,75,.12);border:1px solid rgba(240,56,75,.4);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#FF7A88;">This pool is invite-only. Ask the organizer for an invite link to register.</div>
+        <div id="adminInviteNotice" style="display:none;background:rgba(232,115,12,.15);border:1px solid rgba(232,115,12,.45);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#FF8A1E;">🛠 <strong>Admin invite</strong> — this account will be granted admin (pool management) access. This link works once.</div>
         <div class="input-group">
           <label>Name</label>
           <input type="text" id="regName" placeholder="Your name" />
         </div>
         <div class="input-group">
-          <label>Email</label>
-          <input type="email" id="regEmail" placeholder="your@email.com" />
+          <label>Company Email</label>
+          <input type="email" id="regEmail" placeholder="you@3day.com or you@sunprotectionfl.com" />
         </div>
         <div class="input-group">
           <label>Password</label>
-          <input type="password" id="regPassword" placeholder="minimum 6 characters" />
+          <div class="pw-wrap">
+            <input type="password" id="regPassword" placeholder="minimum 6 characters" />
+            <button type="button" class="pw-eye" onclick="togglePw('regPassword',this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Confirm Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="regPassword2" placeholder="re-type your password" onkeydown="if(event.key==='Enter')doRegister()" />
+            <button type="button" class="pw-eye" onclick="togglePw('regPassword2',this)" aria-label="Show password">👁</button>
+          </div>
         </div>
         <button class="btn btn-gold login-btn" id="registerBtn" onclick="doRegister()">Create Account</button>
         <div class="login-err" id="regErr"></div>
@@ -1039,6 +1071,25 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <strong style="color:var(--text)">How it works:</strong> Registration is invite-only. Without a valid link, new sign-ups are blocked (you, the admin, can always register). Rotating the link disables the previous one.
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header"><strong>🛠 Admin Invite Link <span style="font-size:11px;color:var(--orange);font-weight:700">(single-use)</span></strong></div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:8px">
+        Use this to give <strong style="color:var(--text)">another person admin access</strong> to manage the pool.
+        It's a <strong style="color:var(--text)">separate, one-time link</strong>: the moment someone registers with it, it stops working. Generate a new one for each admin you add.
+      </p>
+      <div class="invite-link-box">
+        <code id="adminInviteLinkDisplay">No active admin link.</code>
+        <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="copyAdminInviteLink()">📋 Copy</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-accent" onclick="generateAdminInviteLink()">🛠 Generate Admin Link</button>
+        <button class="btn btn-danger" onclick="revokeAdminInviteLink()">🚫 Revoke</button>
+      </div>
+      <div style="margin-top:16px;padding:12px 14px;background:var(--dark);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">Note:</strong> the new admin still uses a company email and confirms it via the verification link. Admins manage the portal only — they don't place bets and don't appear on the leaderboard.
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1128,6 +1179,22 @@ const FIREBASE_CONFIG = {
 //  ADMIN EMAIL — auto-granted admin on first sign-in
 // ==========================================================
 const ADMIN_EMAIL = "arossler74@gmail.com";
+
+// ==========================================================
+//  REGISTRATION POLICY
+// ==========================================================
+// Only company addresses may register (the admin email is always allowed).
+const ALLOWED_EMAIL_DOMAINS = ["3day.com", "sunprotectionfl.com"];
+// Require players to confirm their email via the verification link before
+// they can access the pool. The organizer (ADMIN_EMAIL) is exempt.
+const REQUIRE_EMAIL_VERIFICATION = true;
+let _registering = false;  // guard so onAuthChange doesn't race the sign-up flow
+
+function emailDomainAllowed(email) {
+  email = (email || "").toLowerCase().trim();
+  if(email === ADMIN_EMAIL.toLowerCase()) return true;
+  return ALLOWED_EMAIL_DOMAINS.some(d => email.endsWith("@" + d));
+}
 
 // ═══════════════════════════════════════════════════════════
 //  DATA — 48 TEAMS & 72 GROUP STAGE MATCHES
@@ -1451,6 +1518,7 @@ let bettingOpenP1 = true;   // Phase 1 — Classification (groups)
 let bettingOpenP2 = false;  // Phase 2 — Brackets (knockouts)
 let inviteCode = null;      // active invite token (admin-managed)
 let pendingInvite = null;   // invite token from URL on this visit
+let pendingAdminInvite = null;  // single-use ADMIN invite token from URL (?ainvite=)
 let currentGroup = "A";
 let currentResultGroup = "A";
 let currentPubGroup = "A";
@@ -1469,6 +1537,7 @@ function initFirebase() {
   try {
     const params = new URLSearchParams(window.location.search);
     pendingInvite = params.get("invite");
+    pendingAdminInvite = params.get("ainvite");
   } catch(e) {}
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
@@ -1502,7 +1571,13 @@ function showDemoMode() {
 }
 
 async function onAuthChange(user) {
+  if(_registering) return;
   if(user) {
+    const _isAdminEmail = (user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    if(REQUIRE_EMAIL_VERIFICATION && !user.emailVerified && !_isAdminEmail) {
+      showVerifyGate(user.email);
+      return;
+    }
     currentUser = user;
     document.getElementById("userNameDisplay").textContent = user.displayName || user.email.split("@")[0];
     document.getElementById("userBadge").style.display = "flex";
@@ -1565,7 +1640,7 @@ async function onAuthChange(user) {
     document.getElementById("page-bets").classList.remove("active");
     showPage("login");
     // If arriving via an invite link, open registration and validate it
-    if(pendingInvite) { toggleRegister(true); validateInviteForRegistration(); }
+    if(pendingInvite || pendingAdminInvite) { toggleRegister(true); validateInviteForRegistration(); }
   }
 }
 
@@ -1573,12 +1648,17 @@ async function onAuthChange(user) {
 async function validateInviteForRegistration() {
   const ok = document.getElementById("inviteNotice");
   const bad = document.getElementById("noInviteNotice");
+  const adm = document.getElementById("adminInviteNotice");
   const btn = document.getElementById("registerBtn");
   try {
     const inv = await db.collection("config").doc("invites").get();
     const active = inv.exists ? inv.data().activeCode : null;
-    const valid = active && pendingInvite && pendingInvite === active;
-    if(ok) ok.style.display = valid ? "block" : "none";
+    const adminCode = inv.exists ? inv.data().adminCode : null;
+    const adminValid = adminCode && pendingAdminInvite && pendingAdminInvite === adminCode;
+    const userValid = active && pendingInvite && pendingInvite === active;
+    const valid = adminValid || userValid;
+    if(adm) adm.style.display = adminValid ? "block" : "none";
+    if(ok)  ok.style.display  = (!adminValid && userValid) ? "block" : "none";
     if(bad) bad.style.display = valid ? "none" : "block";
     if(btn) { btn.disabled = !valid; btn.style.opacity = valid ? "1" : ".45"; btn.style.cursor = valid ? "pointer" : "not-allowed"; }
   } catch(e) {
@@ -1626,6 +1706,54 @@ function updatePhaseUI() {
 // ═══════════════════════════════════════════════════════════
 //  AUTH
 // ═══════════════════════════════════════════════════════════
+function togglePw(id, btn) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  const show = el.type === "password";
+  el.type = show ? "text" : "password";
+  btn.textContent = show ? "🙈" : "👁";
+  btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+}
+
+function showVerifyGate(email) {
+  showPage("login");
+  const lf = document.getElementById("loginForm");
+  const rf = document.getElementById("registerForm");
+  const vn = document.getElementById("verifyGate");
+  if(lf) lf.style.display = "none";
+  if(rf) rf.style.display = "none";
+  document.querySelectorAll(".login-switch").forEach(s => s.style.display = "none");
+  if(vn) {
+    vn.style.display = "block";
+    const em = document.getElementById("verifyEmail");
+    if(em) em.textContent = email || "your email";
+  }
+  document.getElementById("mainNav").style.display = "none";
+  document.getElementById("userBadge").style.display = "none";
+  document.getElementById("logoutBtn").style.display = "none";
+}
+
+async function resendVerification() {
+  try {
+    if(auth.currentUser) { await auth.currentUser.sendEmailVerification(); showToast("📧 Verification link re-sent."); }
+    else showToast("Please sign in again to resend.", "error");
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+async function checkVerified() {
+  try {
+    if(!auth.currentUser) { showToast("Please sign in again.", "error"); return; }
+    await auth.currentUser.reload();
+    if(auth.currentUser.emailVerified) {
+      const vn = document.getElementById("verifyGate");
+      if(vn) vn.style.display = "none";
+      onAuthChange(auth.currentUser);
+    } else {
+      showToast("Not verified yet — check your inbox (and spam).", "error");
+    }
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
 async function doLogin() {
   const email = document.getElementById("loginEmail").value;
   const pw = document.getElementById("loginPassword").value;
@@ -1638,20 +1766,34 @@ async function doLogin() {
 }
 
 async function doRegister() {
-  const name = document.getElementById("regName").value;
-  const email = document.getElementById("regEmail").value;
+  const name = document.getElementById("regName").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
   const pw = document.getElementById("regPassword").value;
+  const pw2 = document.getElementById("regPassword2").value;
   document.getElementById("regErr").textContent = "";
   if(!name) { document.getElementById("regErr").textContent = "Please enter your name."; return; }
+  if(!emailDomainAllowed(email)) {
+    document.getElementById("regErr").textContent =
+      "Please use your company email (@" + ALLOWED_EMAIL_DOMAINS.join(" or @") + ").";
+    return;
+  }
+  if(pw.length < 6) { document.getElementById("regErr").textContent = "Password must be at least 6 characters."; return; }
+  if(pw !== pw2) { document.getElementById("regErr").textContent = "The two passwords don't match. Please re-type them."; return; }
 
   const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  // Invite gate: non-admins must arrive with a valid, active invite token
+  // Invite gate: non-admins must arrive with a valid invite. An ADMIN invite
+  // (single-use, ?ainvite=) grants admin access; a regular invite grants user.
+  let grantAdmin = false;
   if(!isAdminEmail) {
     try {
       const inv = await db.collection("config").doc("invites").get();
       const active = inv.exists ? inv.data().activeCode : null;
-      if(!active || !pendingInvite || pendingInvite !== active) {
+      const adminCode = inv.exists ? inv.data().adminCode : null;
+      const adminValid = adminCode && pendingAdminInvite && pendingAdminInvite === adminCode;
+      const userValid = active && pendingInvite && pendingInvite === active;
+      if(adminValid) { grantAdmin = true; }
+      else if(!userValid) {
         document.getElementById("regErr").textContent = "A valid invite link is required to register. Please ask the organizer for one.";
         return;
       }
@@ -1661,17 +1803,39 @@ async function doRegister() {
     }
   }
 
+  _registering = true;
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pw);
     await cred.user.updateProfile({ displayName: name });
     // Always create as a normal member; the admin email is auto-promoted
     // in onAuthChange (and enforced server-side by the security rules).
     await db.collection("users").doc(cred.user.uid).set({
-      name, email, role: "user", contributed: false,
-      invitedBy: pendingInvite || null,
+      name, email, role: grantAdmin ? "admin" : "user", contributed: false,
+      invitedBy: pendingInvite || (grantAdmin ? "admin-invite" : null),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Single-use admin invite: burn the code so the link can't be reused.
+    if(grantAdmin) {
+      try { await db.collection("config").doc("invites").update({ adminCode: null }); } catch(_) {}
+    }
+    if(REQUIRE_EMAIL_VERIFICATION && !isAdminEmail) {
+      try { await cred.user.sendEmailVerification(); } catch(_) {}
+      await auth.signOut();
+      _registering = false;
+      toggleRegister(false);   // back to the Sign In form
+      const ln = document.getElementById("loginNotice");
+      if(ln) {
+        ln.style.display = "block";
+        ln.innerHTML = "✓ Account created! We've emailed a verification link to <strong>" +
+          email + "</strong>. Open it to confirm your address, then sign in.";
+      }
+      document.getElementById("loginErr").textContent = "";
+    } else {
+      _registering = false;
+      onAuthChange(auth.currentUser);   // admin / verification disabled: continue
+    }
   } catch(e) {
+    _registering = false;
     document.getElementById("regErr").textContent = e.message;
   }
 }
@@ -1684,6 +1848,9 @@ async function logout() {
 function toggleRegister(show) {
   document.getElementById("loginForm").style.display = show ? "none" : "block";
   document.getElementById("registerForm").style.display = show ? "block" : "none";
+  const vg = document.getElementById("verifyGate"); if(vg) vg.style.display = "none";
+  const ln = document.getElementById("loginNotice"); if(ln && show) ln.style.display = "none";
+  document.querySelectorAll(".login-switch").forEach(s => s.style.display = "");
   if(show && db) validateInviteForRegistration();
 }
 
@@ -2077,12 +2244,18 @@ async function loadScoreboard() {
     resultsSnap.forEach(doc => { results[doc.id] = doc.data(); });
 
     const userMap = {};
-    usersSnap.forEach(doc => { userMap[doc.id] = doc.data().name || doc.data().email; });
+    const adminSet = new Set();
+    usersSnap.forEach(doc => {
+      const d = doc.data();
+      if(d.role === "admin") { adminSet.add(doc.id); return; }  // admins manage the pool, not compete
+      userMap[doc.id] = d.name || d.email;
+    });
 
     const scores = {};
     const details = {};
     betsSnap.forEach(doc => {
       const bet = doc.data();
+      if(adminSet.has(bet.userId)) return;   // never score admin accounts
       const result = results[bet.matchId];
       if(!result || result.homeGoals === undefined) return;
       
@@ -2311,16 +2484,54 @@ function inviteUrl(code) {
   const base = window.location.origin + window.location.pathname;
   return `${base}?invite=${code}`;
 }
+function adminInviteUrl(code) {
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?ainvite=${code}`;
+}
 
 async function loadInviteLink() {
   if(!isAdmin) return;
   const disp = document.getElementById("inviteLinkDisplay");
+  const aDisp = document.getElementById("adminInviteLinkDisplay");
   try {
     const inv = await db.collection("config").doc("invites").get();
     const code = inv.exists ? inv.data().activeCode : null;
+    const aCode = inv.exists ? inv.data().adminCode : null;
     inviteCode = code;
     disp.textContent = code ? inviteUrl(code) : "No active invite link yet. Click \"Generate\" to create one.";
+    if(aDisp) aDisp.textContent = aCode ? adminInviteUrl(aCode) : "No active admin link.";
   } catch(e) { disp.textContent = "Error loading invite: " + e.message; }
+}
+
+async function generateAdminInviteLink() {
+  if(!isAdmin) return;
+  const code = ("A" + Date.now().toString(36) + Math.random().toString(36).slice(2,8)).toUpperCase();
+  try {
+    await db.collection("config").doc("invites").set({
+      adminCode: code,
+      adminUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    document.getElementById("adminInviteLinkDisplay").textContent = adminInviteUrl(code);
+    showToast("🛠 Admin link generated (single-use). Any previous admin link is now invalid.");
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+async function revokeAdminInviteLink() {
+  if(!isAdmin) return;
+  try {
+    await db.collection("config").doc("invites").set({ adminCode: null }, { merge: true });
+    const d = document.getElementById("adminInviteLinkDisplay"); if(d) d.textContent = "No active admin link.";
+    showToast("🚫 Admin link revoked.");
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+function copyAdminInviteLink() {
+  const txt = document.getElementById("adminInviteLinkDisplay").textContent;
+  if(!txt || !txt.includes("ainvite=")) { showToast("Generate an admin link first.", "error"); return; }
+  navigator.clipboard?.writeText(txt).then(
+    () => showToast("📋 Admin link copied!"),
+    () => showToast("Copy failed — select and copy manually.", "error")
+  );
 }
 
 async function generateInviteLink() {
@@ -2432,10 +2643,12 @@ async function loadUsers() {
             <div style="font-size:12px;color:var(--muted)">${u.email}</div>
           </div>
         </div>
-        <div class="comp-cell">
+        ${u.role === "admin"
+          ? `<div class="comp-cell admin-cell">🛠 Admin — manages the pool</div>`
+          : `<div class="comp-cell">
           <div class="comp-row"><span class="comp-ph p1">P1</span><div class="comp-bar"><i style="width:${pct1}%"></i></div><span class="comp-num">${tl.p1}/${p1Total}<small>${pct1}%</small></span></div>
           <div class="comp-row"><span class="comp-ph p2">P2</span><div class="comp-bar"><i style="width:${pct2}%"></i></div><span class="comp-num">${tl.p2}/${p2Total}<small>${pct2}%</small></span></div>
-        </div>
+        </div>`}
         <div class="user-actions">
           <span class="contrib-badge contrib-toggle ${contributed?"contrib-yes":"contrib-no"}"
             title="Pool contribution — click to toggle"
