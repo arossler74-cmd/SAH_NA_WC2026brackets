@@ -1185,9 +1185,10 @@ const ADMIN_EMAIL = "arossler74@gmail.com";
 // ==========================================================
 // Only company addresses may register (the admin email is always allowed).
 const ALLOWED_EMAIL_DOMAINS = ["3day.com", "sunprotectionfl.com"];
-// Require players to confirm their email via the verification link before
-// they can access the pool. The organizer (ADMIN_EMAIL) is exempt.
-const REQUIRE_EMAIL_VERIFICATION = true;
+// Email verification is DISABLED: the company firewall blocks the Firebase
+// verification emails, so access is gated by company-domain only. Flip this
+// back to true (and configure custom SMTP in Firebase) to re-enable it.
+const REQUIRE_EMAIL_VERIFICATION = false;
 let _registering = false;  // guard so onAuthChange doesn't race the sign-up flow
 let _verifyAutoSent = false;  // ensures the gate sends a fresh verification email once
 
