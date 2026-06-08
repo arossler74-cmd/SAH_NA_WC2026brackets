@@ -130,6 +130,12 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   text-align: center; padding: 6px 16px;
   width: 100%; box-sizing: border-box; white-space: normal; line-height: 1.4;
 }
+.pay-banner {
+  background: #E0384B; color: #fff;
+  font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase;
+  text-align: center; padding: 7px 16px;
+  width: 100%; box-sizing: border-box; white-space: normal; line-height: 1.4;
+}
 /* Contribution badges */
 .contrib-badge { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
 .contrib-yes { background: rgba(22,179,100,.2); color: #4ADE94; border: 1px solid rgba(22,179,100,.45); }
@@ -718,6 +724,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 </nav>
 </div>
 <div class="admin-banner" id="adminBanner" style="display:none">ADMIN MODE — you control betting phases, results, members &amp; invites</div>
+<div class="pay-banner" id="payBanner" style="display:none">💵 Payment pending — your $20 buy-in hasn't been received yet. Pay the organizer to lock your spot on the leaderboard.</div>
 
 <!-- ═══════════════════════════════════ LOGIN PAGE ═══════ -->
 <div id="page-login" class="page active">
@@ -1035,7 +1042,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       <button class="btn btn-accent" onclick="showPage('admin-invites')">🔗 Invite People</button>
     </div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">Total Members</div><div class="stat-value" id="mbTotal">-</div></div>
+      <div class="stat-card"><div class="stat-label">Players</div><div class="stat-value" id="mbTotal">-</div></div>
       <div class="stat-card"><div class="stat-label">Contributed</div><div class="stat-value" id="mbPaid" style="color:#4ADE94">-</div></div>
       <div class="stat-card"><div class="stat-label">Not Paid</div><div class="stat-value" id="mbUnpaid" style="color:#FF7A88">-</div></div>
     </div>
@@ -1623,6 +1630,8 @@ async function onAuthChange(user) {
         else { badge.textContent = "Not received"; badge.className = "contrib-badge contrib-no"; }
       }
     }
+    const payB = document.getElementById("payBanner");
+    if(payB) payB.style.display = (!isAdmin && !myData.contributed) ? "block" : "none";
 
     await loadConfig();
     if(isAdmin) {
@@ -1637,6 +1646,7 @@ async function onAuthChange(user) {
     document.getElementById("page-login").classList.add("active");
     document.getElementById("mainNav").style.display = "none";
     document.getElementById("adminBanner").style.display = "none";
+    document.getElementById("payBanner").style.display = "none";
     document.getElementById("userBadge").style.display = "none";
     document.getElementById("logoutBtn").style.display = "none";
     document.getElementById("page-bets").classList.remove("active");
@@ -2631,9 +2641,10 @@ async function loadUsers() {
       else if(koIds.has(b.matchId)) t.p2++;
     });
 
-    // Contribution summary
-    const paid = users.filter(u => u.contributed).length;
-    const total = users.length;
+    // Contribution summary — players only (admins manage, they don't contribute)
+    const players = users.filter(u => u.role !== "admin");
+    const paid = players.filter(u => u.contributed).length;
+    const total = players.length;
     document.getElementById("mbTotal").textContent = total;
     document.getElementById("mbPaid").textContent = paid;
     document.getElementById("mbUnpaid").textContent = total - paid;
@@ -2660,11 +2671,11 @@ async function loadUsers() {
           <div class="comp-row"><span class="comp-ph p2">P2</span><div class="comp-bar"><i style="width:${pct2}%"></i></div><span class="comp-num">${tl.p2}/${p2Total}<small>${pct2}%</small></span></div>
         </div>`}
         <div class="user-actions">
-          <span class="contrib-badge contrib-toggle ${contributed?"contrib-yes":"contrib-no"}"
+          ${u.role !== "admin" ? `<span class="contrib-badge contrib-toggle ${contributed?"contrib-yes":"contrib-no"}"
             title="Pool contribution — click to toggle"
             onclick="toggleContribution('${u.id}',${contributed})">
             ${contributed ? "✓ Paid" : "✕ Not paid"}
-          </span>
+          </span>` : ""}
           <span class="role-badge ${u.role==="admin"?"role-admin":"role-user"}">${u.role||"user"}</span>
           ${u.id !== currentUser.uid ? `
             <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px"
