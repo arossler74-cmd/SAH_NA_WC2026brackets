@@ -752,12 +752,12 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <div style="text-align:center;font-size:40px;margin-bottom:10px">📧</div>
         <h3 style="text-align:center;font-family:'Anton',sans-serif;letter-spacing:.5px;margin-bottom:8px">Verify your email</h3>
         <p style="text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:18px">
-          We sent a verification link to <strong id="verifyEmail" style="color:#fff"></strong>.
-          Open it to confirm your address, then come back and continue.
+          To continue, confirm <strong id="verifyEmail" style="color:#fff"></strong>.
+          We've sent a verification link — if it isn't in your inbox or spam, tap <strong style="color:#fff">Resend</strong> below.
         </p>
-        <button class="btn btn-gold login-btn" onclick="checkVerified()">I've verified — continue</button>
-        <button class="btn btn-ghost login-btn" style="margin-top:8px" onclick="resendVerification()">Resend link</button>
-        <p class="login-switch" style="text-align:center"><a onclick="logout()">Use a different account</a></p>
+        <button class="btn btn-gold login-btn" onclick="resendVerification()">📧 Resend verification email</button>
+        <button class="btn btn-ghost login-btn" style="margin-top:8px" onclick="checkVerified()">I've already verified — continue</button>
+        <p style="text-align:center;margin-top:16px;font-size:13px"><a onclick="logout()" style="color:var(--orange);cursor:pointer;font-weight:700">Use a different account</a></p>
       </div>
 
       <div id="registerForm" style="display:none">
@@ -1189,6 +1189,7 @@ const ALLOWED_EMAIL_DOMAINS = ["3day.com", "sunprotectionfl.com"];
 // they can access the pool. The organizer (ADMIN_EMAIL) is exempt.
 const REQUIRE_EMAIL_VERIFICATION = true;
 let _registering = false;  // guard so onAuthChange doesn't race the sign-up flow
+let _verifyAutoSent = false;  // ensures the gate sends a fresh verification email once
 
 function emailDomainAllowed(email) {
   email = (email || "").toLowerCase().trim();
@@ -1731,6 +1732,14 @@ function showVerifyGate(email) {
   document.getElementById("mainNav").style.display = "none";
   document.getElementById("userBadge").style.display = "none";
   document.getElementById("logoutBtn").style.display = "none";
+  // Auto-send a fresh link once — covers accounts created before verification
+  // existed, or anyone who never received the first email.
+  if(!_verifyAutoSent && auth && auth.currentUser && !auth.currentUser.emailVerified) {
+    _verifyAutoSent = true;
+    auth.currentUser.sendEmailVerification()
+      .then(() => showToast("📧 Verification link sent to " + (email || "your email") + "."))
+      .catch(() => {});
+  }
 }
 
 async function resendVerification() {
