@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&display=swap');
@@ -344,6 +345,8 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .howto-p { color:#dfe3f7; font-size:14px; line-height:1.55; margin:0 0 14px; }
 .howto-p strong, .step strong, .howto-note strong { color:#fff; }
 .howto-note { color:var(--muted); font-size:13px; line-height:1.5; margin:14px 0 0; padding-top:12px; border-top:1px solid var(--border); }
+.pay-box { margin-top:14px; background:rgba(22,179,100,.12); border:1px solid rgba(22,179,100,.45); border-radius:12px; padding:14px 16px; font-size:14px; line-height:1.55; color:#dfe3f7; }
+.pay-box strong { color:#fff; }
 .phase-grid, .lock-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .phase-box { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:16px; }
 .phase-tag { display:inline-block; font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:3px 9px; border-radius:20px; margin-bottom:8px; }
@@ -724,7 +727,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 </nav>
 </div>
 <div class="admin-banner" id="adminBanner" style="display:none">ADMIN MODE — you control betting phases, results, members &amp; invites</div>
-<div class="pay-banner" id="payBanner" style="display:none">💵 Payment pending — your $20 buy-in hasn't been received yet. Pay the organizer to lock your spot on the leaderboard.</div>
+<div class="pay-banner" id="payBanner" style="display:none">💵 Payment pending — send your $20 buy-in to Ariel Vargas via Zelle at (949) 337-7527 to lock your spot on the leaderboard.</div>
 
 <!-- ═══════════════════════════════════ LOGIN PAGE ═══════ -->
 <div id="page-login" class="page active">
@@ -765,6 +768,16 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <button class="btn btn-gold login-btn" onclick="resendVerification()">📧 Resend verification email</button>
         <button class="btn btn-ghost login-btn" style="margin-top:8px" onclick="checkVerified()">I've already verified — continue</button>
         <p style="text-align:center;margin-top:16px;font-size:13px"><a onclick="logout()" style="color:var(--orange);cursor:pointer;font-weight:700">Use a different account</a></p>
+      </div>
+
+      <div id="pwChangeGate" style="display:none">
+        <div style="text-align:center;font-size:40px;margin-bottom:10px">🔑</div>
+        <h3 style="text-align:center;font-family:'Anton',sans-serif;letter-spacing:.5px;margin-bottom:8px">Create a new password</h3>
+        <p style="text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:18px">You're signed in with a temporary password. Set your own password to continue.</p>
+        <div class="input-group"><label>New password</label><div class="pw-wrap"><input type="password" id="newPw1" placeholder="minimum 6 characters"><button type="button" class="pw-eye" onclick="togglePw('newPw1',this)" aria-label="Show password">👁</button></div></div>
+        <div class="input-group"><label>Confirm new password</label><div class="pw-wrap"><input type="password" id="newPw2" placeholder="re-type new password" onkeydown="if(event.key==='Enter')forcePasswordChange()"><button type="button" class="pw-eye" onclick="togglePw('newPw2',this)" aria-label="Show password">👁</button></div></div>
+        <button class="btn btn-gold login-btn" onclick="forcePasswordChange()">Set password &amp; continue</button>
+        <div class="login-err" id="pwChangeErr"></div>
       </div>
 
       <div id="registerForm" style="display:none">
@@ -862,6 +875,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <div class="prize-box silver"><div class="prize-medal">🥈</div><div class="prize-pct">30%</div><div class="prize-lbl">2nd place</div></div>
         <div class="prize-box bronze"><div class="prize-medal">🥉</div><div class="prize-pct">10%</div><div class="prize-lbl">3rd place</div></div>
       </div>
+      <div class="pay-box">💵 <strong>How to pay:</strong> Send your <strong>$20</strong> to <strong>Ariel Vargas</strong> via <strong>Zelle</strong> at <strong>(949) 337-7527</strong>. The organizer marks you as paid once it's received.</div>
       <p class="howto-note">Example: 10 players in a phase → $200 pot → <strong>$120 / $60 / $20</strong> to 1st / 2nd / 3rd. Each phase is paid out separately.</p>
     </div>
 
@@ -1191,7 +1205,7 @@ const ADMIN_EMAIL = "arossler74@gmail.com";
 //  REGISTRATION POLICY
 // ==========================================================
 // Only company addresses may register (the admin email is always allowed).
-const ALLOWED_EMAIL_DOMAINS = ["3day.com", "sunprotectionfl.com"];
+const ALLOWED_EMAIL_DOMAINS = ["3day.com", "sunprotectionfl.com", "hunterdouglas.com"];
 // Email verification is DISABLED: the company firewall blocks the Firebase
 // verification emails, so access is gated by company-domain only. Flip this
 // back to true (and configure custom SMTP in Firebase) to re-enable it.
@@ -1588,6 +1602,21 @@ async function onAuthChange(user) {
       return;
     }
     currentUser = user;
+    // Removed/blocked accounts can't re-enter the pool (and won't be re-created).
+    try {
+      const banned = await db.collection("banned").doc(user.uid).get();
+      if(banned.exists) {
+        await auth.signOut();
+        document.getElementById("mainNav").style.display = "none";
+        document.getElementById("adminBanner").style.display = "none";
+        document.getElementById("payBanner").style.display = "none";
+        document.getElementById("userBadge").style.display = "none";
+        document.getElementById("logoutBtn").style.display = "none";
+        showPage("login");
+        document.getElementById("loginErr").textContent = "Your access to this pool has been removed by the organizer.";
+        return;
+      }
+    } catch(e) {}
     document.getElementById("userNameDisplay").textContent = user.displayName || user.email.split("@")[0];
     document.getElementById("userBadge").style.display = "flex";
     document.getElementById("logoutBtn").style.display = "block";
@@ -1609,6 +1638,9 @@ async function onAuthChange(user) {
       await userRef.set({ ...myData, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       isAdmin = shouldBeAdmin;
     }
+
+    // Admin reset a temporary password for this user — force them to set a new one.
+    if(myData.mustChangePassword) { showPwChangeGate(); return; }
 
     // Admin-only UI
     document.querySelectorAll(".admin-only").forEach(t => t.style.display = isAdmin ? "flex" : "none");
@@ -1772,6 +1804,37 @@ async function checkVerified() {
       showToast("Not verified yet — check your inbox (and spam).", "error");
     }
   } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+function showPwChangeGate() {
+  showPage("login");
+  ["loginForm","registerForm","verifyGate"].forEach(id => { const e = document.getElementById(id); if(e) e.style.display = "none"; });
+  document.querySelectorAll(".login-switch").forEach(s => s.style.display = "none");
+  const g = document.getElementById("pwChangeGate"); if(g) g.style.display = "block";
+  document.getElementById("mainNav").style.display = "none";
+  document.getElementById("userBadge").style.display = "none";
+  document.getElementById("logoutBtn").style.display = "none";
+}
+
+async function forcePasswordChange() {
+  const p1 = document.getElementById("newPw1").value;
+  const p2 = document.getElementById("newPw2").value;
+  const err = document.getElementById("pwChangeErr");
+  err.textContent = "";
+  if(p1.length < 6) { err.textContent = "Password must be at least 6 characters."; return; }
+  if(p1 !== p2) { err.textContent = "The two passwords don't match."; return; }
+  try {
+    await auth.currentUser.updatePassword(p1);
+    await db.collection("users").doc(auth.currentUser.uid).update({ mustChangePassword: false });
+    const g = document.getElementById("pwChangeGate"); if(g) g.style.display = "none";
+    document.getElementById("newPw1").value = ""; document.getElementById("newPw2").value = "";
+    showToast("✅ Password updated.");
+    onAuthChange(auth.currentUser);
+  } catch(e) {
+    err.textContent = (e.code === "auth/requires-recent-login")
+      ? "Please sign out and sign in again with the temporary password, then set your new one."
+      : e.message;
+  }
 }
 
 async function doLogin() {
@@ -2682,6 +2745,8 @@ async function loadUsers() {
               onclick="toggleUserRole('${u.id}','${u.role}')">
               ${u.role==="admin" ? "→ User" : "→ Admin"}
             </button>
+            ${u.role !== "admin" ? `<button class="btn btn-ghost" style="font-size:11px;padding:6px 10px"
+              onclick="adminResetPassword('${u.id}','${escName}')">🔑 Reset PW</button>` : ""}
             <button class="btn btn-danger" style="font-size:11px;padding:6px 10px"
               onclick="confirmDeleteUser('${u.id}','${escName}')">
               Remove
@@ -2704,11 +2769,42 @@ async function toggleUserRole(uid, currentRole) {
   } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 
+async function adminResetPassword(uid, name) {
+  const temp = "Temp-" + Math.random().toString(36).slice(2, 7) + Math.floor(10 + Math.random() * 89);
+  openModal(`Reset password for "${name}"?`,
+    "A temporary password will be set; share it with the user. They'll be asked to choose a new password the next time they sign in.",
+    async () => {
+      try {
+        if(typeof firebase.functions !== "function") throw new Error("functions-sdk-missing");
+        const call = firebase.functions().httpsCallable("adminSetTempPassword");
+        await call({ uid, tempPassword: temp });
+        await db.collection("users").doc(uid).update({ mustChangePassword: true });
+        openModal("Temporary password set 🔑",
+          `Share this with ${name}: ${temp}  —  they'll be asked to create their own password at next login.`,
+          () => {});
+      } catch(e) {
+        openModal("Couldn't reset the password",
+          "This needs the 'adminSetTempPassword' Cloud Function deployed (Firebase Blaze plan). See the deploy notes I provided. Details: " + (e.message || e),
+          () => {});
+      }
+    });
+}
+
 function confirmDeleteUser(uid, name) {
-  openModal(`Remove "${name}"?`, "This will remove the user from the pool. Their bets will not be deleted.", async () => {
+  openModal(`Remove "${name}"?`,
+    "This deletes their predictions and blocks their access to the pool. Note: it does NOT delete their login from Firebase Authentication — to fully remove the email, also delete it in the Firebase Console (Authentication → Users).",
+    async () => {
     try {
-      await db.collection("users").doc(uid).delete();
-      showToast("✅ User removed");
+      const betsSnap = await db.collection("bets").where("userId", "==", uid).get();
+      const batch = db.batch();
+      betsSnap.forEach(d => batch.delete(d.ref));                       // 1) wipe their predictions
+      batch.set(db.collection("banned").doc(uid), {                    // 2) block re-entry / re-creation
+        name: name || null,
+        bannedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      batch.delete(db.collection("users").doc(uid));                   // 3) remove the member record
+      await batch.commit();
+      showToast("✅ User removed — predictions deleted and access blocked");
       loadUsers();
     } catch(e) { showToast("Error: " + e.message, "error"); }
   });
