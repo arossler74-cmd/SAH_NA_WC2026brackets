@@ -1855,11 +1855,6 @@ async function doRegister() {
   const pw2 = document.getElementById("regPassword2").value;
   document.getElementById("regErr").textContent = "";
   if(!name) { document.getElementById("regErr").textContent = "Please enter your name."; return; }
-  if(!emailDomainAllowed(email)) {
-    document.getElementById("regErr").textContent =
-      "Please use your company email (@" + ALLOWED_EMAIL_DOMAINS.join(" or @") + ").";
-    return;
-  }
   if(pw.length < 6) { document.getElementById("regErr").textContent = "Password must be at least 6 characters."; return; }
   if(pw !== pw2) { document.getElementById("regErr").textContent = "The two passwords don't match. Please re-type them."; return; }
 
@@ -1884,6 +1879,15 @@ async function doRegister() {
       document.getElementById("regErr").textContent = "Could not verify invite. Please try the invite link again.";
       return;
     }
+  }
+
+  // Company-domain restriction applies to PLAYERS only. Admins — the organizer
+  // email or anyone registering via a valid single-use admin invite — may use
+  // any email domain.
+  if(!isAdminEmail && !grantAdmin && !emailDomainAllowed(email)) {
+    document.getElementById("regErr").textContent =
+      "Please use your company email (@" + ALLOWED_EMAIL_DOMAINS.join(" or @") + ").";
+    return;
   }
 
   _registering = true;
