@@ -1202,6 +1202,16 @@ const FIREBASE_CONFIG = {
 const ADMIN_EMAIL = "arossler74@gmail.com";
 
 // ==========================================================
+//  POOL SEPARATION
+// ==========================================================
+// "" = the main pool. Set a prefix (e.g. "f_") for a SEPARATE pool that shares
+// the same Firebase project but keeps its own data — members, bets, results,
+// invites, contributions, etc. all live in prefixed Firestore collections, so
+// the two pools never mix. (Firebase Auth logins are shared across both.)
+const POOL_PREFIX = "";
+function col(name) { return db.collection(POOL_PREFIX + name); }
+
+// ==========================================================
 //  REGISTRATION POLICY
 // ==========================================================
 // Only company addresses may register (the admin email is always allowed).
@@ -1214,6 +1224,7 @@ let _registering = false;  // guard so onAuthChange doesn't race the sign-up flo
 let _verifyAutoSent = false;  // ensures the gate sends a fresh verification email once
 
 function emailDomainAllowed(email) {
+  if(!ALLOWED_EMAIL_DOMAINS.length) return true;   // empty list = any domain allowed
   email = (email || "").toLowerCase().trim();
   if(email === ADMIN_EMAIL.toLowerCase()) return true;
   return ALLOWED_EMAIL_DOMAINS.some(d => email.endsWith("@" + d));
@@ -1604,7 +1615,7 @@ async function onAuthChange(user) {
     currentUser = user;
     // Removed/blocked accounts can't re-enter the pool (and won't be re-created).
     try {
-      const banned = await db.collection("banned").doc(user.uid).get();
+      const banned = await col("banned").doc(user.uid).get();
       if(banned.exists) {
         await auth.signOut();
         document.getElementById("mainNav").style.display = "none";
@@ -1624,7 +1635,7 @@ async function onAuthChange(user) {
     document.getElementById("mainNav").style.display = "flex";
 
     // Auto-admin for hardcoded email; create user doc on first login
-    const userRef = db.collection("users").doc(user.uid);
+    const userRef = col("users").doc(user.uid);
     const userDoc = await userRef.get();
     const shouldBeAdmin = user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
     let myData = {};
@@ -1695,7 +1706,7 @@ async function validateInviteForRegistration() {
   const adm = document.getElementById("adminInviteNotice");
   const btn = document.getElementById("registerBtn");
   try {
-    const inv = await db.collection("config").doc("invites").get();
+    const inv = await col("config").doc("invites").get();
     const active = inv.exists ? inv.data().activeCode : null;
     const adminCode = inv.exists ? inv.data().adminCode : null;
     const adminValid = adminCode && pendingAdminInvite && pendingAdminInvite === adminCode;
@@ -1713,7 +1724,7 @@ async function validateInviteForRegistration() {
 
 async function loadConfig() {
   try {
-    const cfg = await db.collection("config").doc("main").get();
+    const cfg = await col("config").doc("main").get();
     if(cfg.exists) {
       const data = cfg.data();
       pointsConfig = data.points || pointsConfig;
@@ -1724,7 +1735,7 @@ async function loadConfig() {
       if(data.bettingOpenP2 !== undefined) bettingOpenP2 = data.bettingOpenP2 === true;
       else if(data.bettingOpen !== undefined && activePhase==="knockouts") bettingOpenP2 = data.bettingOpen !== false;
     }
-    const inv = await db.collection("config").doc("invites").get();
+    const inv = await col("config").doc("invites").get();
     inviteCode = inv.exists ? (inv.data().activeCode || null) : null;
   } catch(e) {}
   updatePhaseUI();
@@ -1825,7 +1836,7 @@ async function forcePasswordChange() {
   if(p1 !== p2) { err.textContent = "The two passwords don't match."; return; }
   try {
     await auth.currentUser.updatePassword(p1);
-    await db.collection("users").doc(auth.currentUser.uid).update({ mustChangePassword: false });
+    await col("users").doc(auth.currentUser.uid).update({ mustChangePassword: false });
     const g = document.getElementById("pwChangeGate"); if(g) g.style.display = "none";
     document.getElementById("newPw1").value = ""; document.getElementById("newPw2").value = "";
     showToast("✅ Password updated.");
@@ -1865,7 +1876,7 @@ async function doRegister() {
   let grantAdmin = false;
   if(!isAdminEmail) {
     try {
-      const inv = await db.collection("config").doc("invites").get();
+      const inv = await col("config").doc("invites").get();
       const active = inv.exists ? inv.data().activeCode : null;
       const adminCode = inv.exists ? inv.data().adminCode : null;
       const adminValid = adminCode && pendingAdminInvite && pendingAdminInvite === adminCode;
@@ -1896,14 +1907,14 @@ async function doRegister() {
     await cred.user.updateProfile({ displayName: name });
     // Always create as a normal member; the admin email is auto-promoted
     // in onAuthChange (and enforced server-side by the security rules).
-    await db.collection("users").doc(cred.user.uid).set({
+    await col("users").doc(cred.user.uid).set({
       name, email, role: grantAdmin ? "admin" : "user", contributed: false,
       invitedBy: pendingInvite || (grantAdmin ? "admin-invite" : null),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     // Single-use admin invite: burn the code so the link can't be reused.
     if(grantAdmin) {
-      try { await db.collection("config").doc("invites").update({ adminCode: null }); } catch(_) {}
+      try { await col("config").doc("invites").update({ adminCode: null }); } catch(_) {}
     }
     if(REQUIRE_EMAIL_VERIFICATION && !isAdminEmail) {
       try { await cred.user.sendEmailVerification(); } catch(_) {}
@@ -1954,7 +1965,7 @@ async function renderSchedule(forceReload) {
   if(_schedResults === null || forceReload) {
     list.innerHTML = `<div class="loader"><div class="spinner"></div>Loading...</div>`;
     try {
-      const snap = await db.collection("results").get();
+      const snap = await col("results").get();
       _schedResults = {};
       snap.forEach(doc => { _schedResults[doc.id] = doc.data(); });
     } catch(e) {
@@ -2072,7 +2083,7 @@ async function loadMatchCards() {
   // Load user's existing bets
   let userBets = {};
   try {
-    const betsSnap = await db.collection("bets")
+    const betsSnap = await col("bets")
       .where("userId","==",currentUser.uid)
       .get();
     betsSnap.forEach(doc => { userBets[doc.data().matchId] = doc.data(); });
@@ -2081,7 +2092,7 @@ async function loadMatchCards() {
   // Load results
   let results = {};
   try {
-    const resSnap = await db.collection("results").get();
+    const resSnap = await col("results").get();
     resSnap.forEach(doc => { results[doc.id] = doc.data(); });
   } catch(e) {}
 
@@ -2188,7 +2199,7 @@ async function saveGroupBets() {
     const h = hEl.value, a = aEl.value;
     if(h === "" || a === "") { skipped++; continue; }   // leave blank matches alone
     try {
-      await db.collection("bets").doc(`${currentUser.uid}_${m.id}`).set({
+      await col("bets").doc(`${currentUser.uid}_${m.id}`).set({
         userId: currentUser.uid,
         userName: currentUser.displayName || currentUser.email,
         matchId: m.id, homeTeam: m.homeTeam, awayTeam: m.awayTeam,
@@ -2298,7 +2309,7 @@ async function saveBet(matchId, homeTeam, awayTeam) {
   if(hGoals === "" || aGoals === "") { showToast("Please fill in both scores!", "error"); return; }
 
   try {
-    await db.collection("bets").doc(`${currentUser.uid}_${matchId}`).set({
+    await col("bets").doc(`${currentUser.uid}_${matchId}`).set({
       userId: currentUser.uid,
       userName: currentUser.displayName || currentUser.email,
       matchId, homeTeam, awayTeam,
@@ -2322,9 +2333,9 @@ async function loadScoreboard() {
   
   try {
     const [betsSnap, resultsSnap, usersSnap] = await Promise.all([
-      db.collection("bets").get(),
-      db.collection("results").get(),
-      db.collection("users").get()
+      col("bets").get(),
+      col("results").get(),
+      col("users").get()
     ]);
 
     const results = {};
@@ -2405,7 +2416,7 @@ async function loadPublicResults() {
   const list = document.getElementById("pubResultList");
   list.innerHTML = `<div class="loader"><div class="spinner"></div>Loading...</div>`;
   try {
-    const snap = await db.collection("results").get();
+    const snap = await col("results").get();
     _pubResultsCache = {};
     snap.forEach(doc => { _pubResultsCache[doc.id] = doc.data(); });
   } catch(e) {
@@ -2477,13 +2488,13 @@ async function loadAdminResults() {
 
   let existingResults = {};
   try {
-    const snap = await db.collection("results").get();
+    const snap = await col("results").get();
     snap.forEach(doc => { existingResults[doc.id] = doc.data(); });
   } catch(e) {}
 
   // Phase config (admin)
   try {
-    const cfg = await db.collection("config").doc("main").get();
+    const cfg = await col("config").doc("main").get();
     if(cfg.exists) {
       const d = cfg.data();
       document.getElementById("phaseSelect").value = d.activePhase || "groups";
@@ -2526,7 +2537,7 @@ async function saveResult(matchId, homeTeam, awayTeam) {
   const a = document.getElementById(`ra_${matchId}`).value;
   if(h === "" || a === "") { showToast("Please fill in both scores!", "error"); return; }
   try {
-    await db.collection("results").doc(matchId).set({
+    await col("results").doc(matchId).set({
       matchId, homeTeam, awayTeam,
       homeGoals: parseInt(h), awayGoals: parseInt(a),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2542,7 +2553,7 @@ async function deleteResult(matchId, label) {
   if(!isAdmin) return;
   openModal(`Remove result for ${label}?`, "This deletes the official score for this match. Points that depended on it will be recalculated, and the match will show as not played again.", async () => {
     try {
-      await db.collection("results").doc(matchId).delete();
+      await col("results").doc(matchId).delete();
       showToast("🗑 Result removed.");
       loadAdminResults();
     } catch(e) {
@@ -2557,7 +2568,7 @@ async function savePhaseConfig() {
   const p1 = document.getElementById("bettingOpenP1").value === "open";
   const p2 = document.getElementById("bettingOpenP2").value === "open";
   try {
-    await db.collection("config").doc("main").set({ activePhase: phase, bettingOpenP1: p1, bettingOpenP2: p2 }, { merge: true });
+    await col("config").doc("main").set({ activePhase: phase, bettingOpenP1: p1, bettingOpenP2: p2 }, { merge: true });
     activePhase = phase; bettingOpenP1 = p1; bettingOpenP2 = p2;
     updatePhaseUI();
     showToast("✅ Phase configuration saved!");
@@ -2581,7 +2592,7 @@ async function loadInviteLink() {
   const disp = document.getElementById("inviteLinkDisplay");
   const aDisp = document.getElementById("adminInviteLinkDisplay");
   try {
-    const inv = await db.collection("config").doc("invites").get();
+    const inv = await col("config").doc("invites").get();
     const code = inv.exists ? inv.data().activeCode : null;
     const aCode = inv.exists ? inv.data().adminCode : null;
     inviteCode = code;
@@ -2594,7 +2605,7 @@ async function generateAdminInviteLink() {
   if(!isAdmin) return;
   const code = ("A" + Date.now().toString(36) + Math.random().toString(36).slice(2,8)).toUpperCase();
   try {
-    await db.collection("config").doc("invites").set({
+    await col("config").doc("invites").set({
       adminCode: code,
       adminUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
@@ -2606,7 +2617,7 @@ async function generateAdminInviteLink() {
 async function revokeAdminInviteLink() {
   if(!isAdmin) return;
   try {
-    await db.collection("config").doc("invites").set({ adminCode: null }, { merge: true });
+    await col("config").doc("invites").set({ adminCode: null }, { merge: true });
     const d = document.getElementById("adminInviteLinkDisplay"); if(d) d.textContent = "No active admin link.";
     showToast("🚫 Admin link revoked.");
   } catch(e) { showToast("Error: " + e.message, "error"); }
@@ -2625,7 +2636,7 @@ async function generateInviteLink() {
   if(!isAdmin) return;
   const code = (Date.now().toString(36) + Math.random().toString(36).slice(2,8)).toUpperCase();
   try {
-    await db.collection("config").doc("invites").set({
+    await col("config").doc("invites").set({
       activeCode: code,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
@@ -2639,7 +2650,7 @@ async function disableInviteLink() {
   if(!isAdmin) return;
   openModal("Disable invites?", "The current link will stop working and no one new can register until you generate a new one.", async () => {
     try {
-      await db.collection("config").doc("invites").set({ activeCode: null }, { merge: true });
+      await col("config").doc("invites").set({ activeCode: null }, { merge: true });
       inviteCode = null;
       document.getElementById("inviteLinkDisplay").textContent = "Invites are disabled.";
       showToast("🚫 Invites disabled.");
@@ -2662,7 +2673,7 @@ function copyInviteLink() {
 async function toggleContribution(uid, current) {
   if(!isAdmin) return;
   try {
-    await db.collection("users").doc(uid).update({ contributed: !current });
+    await col("users").doc(uid).update({ contributed: !current });
     showToast(!current ? "✅ Marked as contributed" : "↩️ Marked as pending");
     loadUsers();
   } catch(e) { showToast("Error: " + e.message, "error"); }
@@ -2689,8 +2700,8 @@ async function loadUsers() {
   
   try {
     const [snap, betsSnap] = await Promise.all([
-      db.collection("users").get(),
-      db.collection("bets").get()
+      col("users").get(),
+      col("bets").get()
     ]);
     const users = [];
     snap.forEach(doc => users.push({id: doc.id, ...doc.data()}));
@@ -2767,7 +2778,7 @@ async function loadUsers() {
 async function toggleUserRole(uid, currentRole) {
   const newRole = currentRole === "admin" ? "user" : "admin";
   try {
-    await db.collection("users").doc(uid).update({ role: newRole });
+    await col("users").doc(uid).update({ role: newRole });
     showToast(`✅ Role changed to ${newRole}`);
     loadUsers();
   } catch(e) { showToast("Error: " + e.message, "error"); }
@@ -2782,7 +2793,7 @@ async function adminResetPassword(uid, name) {
         if(typeof firebase.functions !== "function") throw new Error("functions-sdk-missing");
         const call = firebase.functions().httpsCallable("adminSetTempPassword");
         await call({ uid, tempPassword: temp });
-        await db.collection("users").doc(uid).update({ mustChangePassword: true });
+        await col("users").doc(uid).update({ mustChangePassword: true });
         openModal("Temporary password set 🔑",
           `Share this with ${name}: ${temp}  —  they'll be asked to create their own password at next login.`,
           () => {});
@@ -2799,14 +2810,14 @@ function confirmDeleteUser(uid, name) {
     "This deletes their predictions and blocks their access to the pool. Note: it does NOT delete their login from Firebase Authentication — to fully remove the email, also delete it in the Firebase Console (Authentication → Users).",
     async () => {
     try {
-      const betsSnap = await db.collection("bets").where("userId", "==", uid).get();
+      const betsSnap = await col("bets").where("userId", "==", uid).get();
       const batch = db.batch();
       betsSnap.forEach(d => batch.delete(d.ref));                       // 1) wipe their predictions
-      batch.set(db.collection("banned").doc(uid), {                    // 2) block re-entry / re-creation
+      batch.set(col("banned").doc(uid), {                    // 2) block re-entry / re-creation
         name: name || null,
         bannedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      batch.delete(db.collection("users").doc(uid));                   // 3) remove the member record
+      batch.delete(col("users").doc(uid));                   // 3) remove the member record
       await batch.commit();
       showToast("✅ User removed — predictions deleted and access blocked");
       loadUsers();
@@ -2819,7 +2830,7 @@ function confirmDeleteUser(uid, name) {
 // ═══════════════════════════════════════════════════════════
 async function loadPointsConfig() {
   try {
-    const cfg = await db.collection("config").doc("main").get();
+    const cfg = await col("config").doc("main").get();
     if(cfg.exists && cfg.data().points) {
       const p = cfg.data().points;
       document.getElementById("pts_perfect").value = p.perfect ?? 15;
@@ -2838,7 +2849,7 @@ async function savePointsConfig() {
     oneScore: parseInt(document.getElementById("pts_oneScore").value),
   };
   try {
-    await db.collection("config").doc("main").set({ points: pts }, { merge: true });
+    await col("config").doc("main").set({ points: pts }, { merge: true });
     pointsConfig = pts;
     showToast("✅ Scoring configuration saved!");
   } catch(e) { showToast("Error: " + e.message, "error"); }
