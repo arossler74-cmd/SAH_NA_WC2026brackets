@@ -538,6 +538,11 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
   border-radius: var(--radius); padding: 18px;
 }
 .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+.member-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.mf-btn { background: var(--dark); color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s; }
+.mf-btn:hover { color: var(--text); border-color: var(--orange); }
+.mf-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
 .stat-value { font-family: 'Anton', sans-serif; font-size: 38px; color: #fff; letter-spacing: 1px; }
 .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
@@ -981,6 +986,19 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       <div class="stat-card"><div class="stat-label">Leader</div><div class="stat-value" id="sbLeader" style="font-size:22px;padding-top:6px">-</div></div>
     </div>
 
+    <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px;justify-content:space-between">
+      <div>
+        <div class="stat-label">Prize Pool</div>
+        <div style="font-family:'Anton',sans-serif;font-size:34px;color:var(--orange);line-height:1" id="sbPool">-</div>
+        <div class="stat-sub" id="sbPoolSub"></div>
+      </div>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">
+        <div style="text-align:center"><div style="font-size:22px">🥇</div><div style="font-weight:800;font-size:18px" id="sbPrize1">-</div><div class="stat-sub">1st</div></div>
+        <div style="text-align:center"><div style="font-size:22px">🥈</div><div style="font-weight:800;font-size:18px" id="sbPrize2">-</div><div class="stat-sub">2nd</div></div>
+        <div style="text-align:center"><div style="font-size:22px">🥉</div><div style="font-weight:800;font-size:18px" id="sbPrize3">-</div><div class="stat-sub">3rd</div></div>
+      </div>
+    </div>
+
     <div class="card">
       <table class="scoreboard-table">
         <thead>
@@ -1057,10 +1075,19 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-label">Players</div><div class="stat-value" id="mbTotal">-</div></div>
-      <div class="stat-card"><div class="stat-label">Contributed</div><div class="stat-value" id="mbPaid" style="color:#4ADE94">-</div></div>
-      <div class="stat-card"><div class="stat-label">Not Paid</div><div class="stat-value" id="mbUnpaid" style="color:#FF7A88">-</div></div>
+      <div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value" id="mbCollected" style="color:#4ADE94">-</div><div class="stat-sub" id="mbCollectedSub"></div></div>
+      <div class="stat-card"><div class="stat-label">Outstanding</div><div class="stat-value" id="mbOutstanding" style="color:#FF7A88">-</div><div class="stat-sub" id="mbOutstandingSub"></div></div>
+      <div class="stat-card"><div class="stat-label">Prize Pool</div><div class="stat-value" id="mbPool" style="color:var(--orange)">-</div><div class="stat-sub" id="mbPrizeSub"></div></div>
+      <div class="stat-card"><div class="stat-label">Completion</div><div class="stat-value" id="mbCompletion" style="color:#7AA2FF">-</div><div class="stat-sub" id="mbCompletionSub"></div></div>
     </div>
     <div class="card">
+      <div class="member-filters">
+        <button class="mf-btn active" data-filter="all" onclick="filterMembers('all',this)">All</button>
+        <button class="mf-btn" data-filter="players" onclick="filterMembers('players',this)">Players</button>
+        <button class="mf-btn" data-filter="admins" onclick="filterMembers('admins',this)">Admins</button>
+        <button class="mf-btn" data-filter="paid" onclick="filterMembers('paid',this)">✓ Contributed</button>
+        <button class="mf-btn" data-filter="unpaid" onclick="filterMembers('unpaid',this)">✕ Not contributed</button>
+      </div>
       <div id="userList"><div class="loader"><div class="spinner"></div>Loading...</div></div>
     </div>
   </div>
@@ -1210,6 +1237,11 @@ const ADMIN_EMAIL = "arossler74@gmail.com";
 // the two pools never mix. (Firebase Auth logins are shared across both.)
 const POOL_PREFIX = "";
 function col(name) { return db.collection(POOL_PREFIX + name); }
+
+// Pool economics
+const BUY_IN_USD = 20;                                 // contribution per player
+const PRIZE_PCT = { first: 0.60, second: 0.30, third: 0.10 };
+const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
 
 // ==========================================================
 //  REGISTRATION POLICY
@@ -2349,6 +2381,17 @@ async function loadScoreboard() {
       userMap[doc.id] = d.name || d.email;
     });
 
+    // Prize pool (players only) shown to everyone
+    const playerCount = Object.keys(userMap).length;
+    let paidCount = 0;
+    usersSnap.forEach(doc => { const d = doc.data(); if(d.role !== "admin" && d.contributed) paidCount++; });
+    const sbPoolAmt = playerCount * BUY_IN_USD;
+    document.getElementById("sbPool").textContent = money(sbPoolAmt);
+    document.getElementById("sbPoolSub").textContent = paidCount + " of " + playerCount + " paid · $" + BUY_IN_USD + " each";
+    document.getElementById("sbPrize1").textContent = money(sbPoolAmt * PRIZE_PCT.first);
+    document.getElementById("sbPrize2").textContent = money(sbPoolAmt * PRIZE_PCT.second);
+    document.getElementById("sbPrize3").textContent = money(sbPoolAmt * PRIZE_PCT.third);
+
     const scores = {};
     const details = {};
     betsSnap.forEach(doc => {
@@ -2721,11 +2764,39 @@ async function loadUsers() {
 
     // Contribution summary — players only (admins manage, they don't contribute)
     const players = users.filter(u => u.role !== "admin");
-    const paid = players.filter(u => u.contributed).length;
+    const paidCount = players.filter(u => u.contributed).length;
     const total = players.length;
+    const collected = paidCount * BUY_IN_USD;
+    const pool = total * BUY_IN_USD;
+    const outstanding = pool - collected;
     document.getElementById("mbTotal").textContent = total;
-    document.getElementById("mbPaid").textContent = paid;
-    document.getElementById("mbUnpaid").textContent = total - paid;
+    document.getElementById("mbCollected").textContent = money(collected);
+    document.getElementById("mbCollectedSub").textContent = paidCount + " of " + total + " paid";
+    document.getElementById("mbOutstanding").textContent = money(outstanding);
+    document.getElementById("mbOutstandingSub").textContent = (total - paidCount) + " pending";
+    document.getElementById("mbPool").textContent = money(pool);
+    document.getElementById("mbPrizeSub").innerHTML =
+      "🥇 " + money(pool * PRIZE_PCT.first) + " · 🥈 " + money(pool * PRIZE_PCT.second) + " · 🥉 " + money(pool * PRIZE_PCT.third);
+
+    // Completion rate across players (for the open phase(s); falls back to both)
+    const phaseOpen = [];
+    if(typeof bettingOpenP1 === "undefined" || bettingOpenP1) phaseOpen.push("p1");
+    if(typeof bettingOpenP2 !== "undefined" && bettingOpenP2) phaseOpen.push("p2");
+    if(!phaseOpen.length) { phaseOpen.push("p1", "p2"); }
+    const perPlayerTarget = (phaseOpen.includes("p1") ? p1Total : 0) + (phaseOpen.includes("p2") ? p2Total : 0);
+    let made = 0, doneCount = 0, notStarted = 0;
+    players.forEach(u => {
+      const t = tally[u.id] || { p1: 0, p2: 0 };
+      const m = (phaseOpen.includes("p1") ? t.p1 : 0) + (phaseOpen.includes("p2") ? t.p2 : 0);
+      made += m;
+      if(perPlayerTarget && m >= perPlayerTarget) doneCount++;
+      if(m === 0) notStarted++;
+    });
+    const possible = total * perPlayerTarget;
+    const compPct = possible ? Math.round(made / possible * 100) : 0;
+    document.getElementById("mbCompletion").textContent = compPct + "%";
+    document.getElementById("mbCompletionSub").textContent =
+      doneCount + " at 100% · " + notStarted + " not started";
 
     container.innerHTML = users.map(u => {
       const contributed = !!u.contributed;
@@ -2734,7 +2805,7 @@ async function loadUsers() {
       const pct1 = p1Total ? Math.round(tl.p1 / p1Total * 100) : 0;
       const pct2 = p2Total ? Math.round(tl.p2 / p2Total * 100) : 0;
       return `
-      <div class="user-row">
+      <div class="user-row" data-role="${u.role||'user'}" data-paid="${contributed?'1':'0'}">
         <div class="user-info">
           <div class="avatar">${(u.name||u.email||"?")[0].toUpperCase()}</div>
           <div>
@@ -2752,12 +2823,12 @@ async function loadUsers() {
           ${u.role !== "admin" ? `<span class="contrib-badge contrib-toggle ${contributed?"contrib-yes":"contrib-no"}"
             title="Pool contribution — click to toggle"
             onclick="toggleContribution('${u.id}',${contributed})">
-            ${contributed ? "✓ Paid" : "✕ Not paid"}
+            ${contributed ? "✓ Paid" : "✕ Not paid"} · $${BUY_IN_USD}
           </span>` : ""}
           <span class="role-badge ${u.role==="admin"?"role-admin":"role-user"}">${u.role||"user"}</span>
           ${u.id !== currentUser.uid ? `
             <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px"
-              onclick="toggleUserRole('${u.id}','${u.role}')">
+              onclick="toggleUserRole('${u.id}','${u.role}','${escName}')">
               ${u.role==="admin" ? "→ User" : "→ Admin"}
             </button>
             ${u.role !== "admin" ? `<button class="btn btn-ghost" style="font-size:11px;padding:6px 10px"
@@ -2770,18 +2841,40 @@ async function loadUsers() {
         </div>
       </div>`;
     }).join("");
+    filterMembers(_memberFilter);
   } catch(e) {
     container.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`;
   }
 }
 
-async function toggleUserRole(uid, currentRole) {
+let _memberFilter = "all";
+function filterMembers(type, btn) {
+  _memberFilter = type;
+  document.querySelectorAll(".member-filters .mf-btn").forEach(b =>
+    b.classList.toggle("active", btn ? b === btn : b.dataset.filter === type));
+  document.querySelectorAll("#userList .user-row").forEach(row => {
+    const role = row.dataset.role, paid = row.dataset.paid;
+    let show = true;
+    if(type === "players") show = role !== "admin";
+    else if(type === "admins") show = role === "admin";
+    else if(type === "paid") show = role !== "admin" && paid === "1";
+    else if(type === "unpaid") show = role !== "admin" && paid === "0";
+    row.style.display = show ? "" : "none";
+  });
+}
+
+async function toggleUserRole(uid, currentRole, name) {
   const newRole = currentRole === "admin" ? "user" : "admin";
-  try {
-    await col("users").doc(uid).update({ role: newRole });
-    showToast(`✅ Role changed to ${newRole}`);
-    loadUsers();
-  } catch(e) { showToast("Error: " + e.message, "error"); }
+  const msg = newRole === "admin"
+    ? `Make "${name}" an admin? They'll be able to manage results, members, invites and the pool — and they'll be removed from the players list and leaderboard.`
+    : `Change "${name}" back to a regular player? They'll lose admin access and re-join the players list.`;
+  openModal(newRole === "admin" ? "Promote to admin?" : "Change to player?", msg, async () => {
+    try {
+      await col("users").doc(uid).update({ role: newRole });
+      showToast(`✅ ${name} is now ${newRole === "admin" ? "an admin" : "a player"}`);
+      loadUsers();
+    } catch(e) { showToast("Error: " + e.message, "error"); }
+  });
 }
 
 async function adminResetPassword(uid, name) {
