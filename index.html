@@ -2437,7 +2437,7 @@ function openEmailLeaderboard(){
       <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)"><strong style="font-size:16px;color:#fff">📧 Email-ready leaderboard</strong><button class="btn btn-ghost" onclick="document.getElementById('emailOverlay').style.display='none'">✕</button></div>
       <div style="padding:12px 18px;font-size:12px;color:var(--muted)">Click <strong>Copy for email</strong>, then paste (Ctrl/Cmd+V) into Gmail or Outlook — the formatting is preserved.</div>
       <iframe id="emailFrame" style="border:0;flex:1;min-height:430px;background:#EEF1FB;border-radius:10px;margin:0 16px"></iframe>
-      <div style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border,#2A3470)"><button class="btn btn-ghost" onclick="openEmailTab()">Open in new tab</button><button class="btn btn-gold" onclick="copyEmailLeaderboard()">📋 Copy for email</button></div>
+      <div style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid var(--border,#2A3470)"><button class="btn btn-ghost" onclick="openEmailTab()">Open in new tab</button><button class="btn btn-ghost" onclick="downloadLeaderboardImage('png')">🖼 PNG</button><button class="btn btn-ghost" onclick="downloadLeaderboardImage('jpg')">JPG</button><button class="btn btn-gold" onclick="copyEmailLeaderboard()">📋 Copy for email</button></div>
     </div>`;
     document.body.appendChild(ov);
   }
@@ -2463,6 +2463,109 @@ function openEmailTab(){
   const w = window.open("", "_blank");
   if(w){ w.document.open(); w.document.write(window._emailHtml || ""); w.document.close(); }
   else showToast("Allow pop-ups to open the preview tab.", "error");
+}
+
+function _roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function downloadLeaderboardImage(format){
+  if(!lastStandings || !lastStandings.rows){ showToast("Open or refresh the Leaderboard first.","error"); return; }
+  const s = lastStandings;
+  const POOL_NAME = "FIFA World Cup '26 Brackets";
+  const SITE_URL = "wc26brackets.3daytech.com";
+  const hasPool = s.pool != null;
+  const rows = s.rows || [];
+  const FONT = "Arial, Helvetica, sans-serif";
+  const scale = 2;
+  const W = 640, cardX = 20, cardW = W - 40, cardY = 20;
+  const tableX = cardX + 12, tableW = cardW - 24;
+  const headerH = 72, prizeH = hasPool ? 42 : 0, metaH = 36, theadH = 34, rowH = 40, footerH = 38;
+  const cardH = headerH + prizeH + metaH + theadH + (rows.length||1)*rowH + footerH;
+  const H = cardY + cardH + 20;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W*scale; canvas.height = H*scale;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = "#EEF1FB"; ctx.fillRect(0,0,W,H);
+  _roundRect(ctx, cardX, cardY, cardW, cardH, 14); ctx.fillStyle = "#FFFFFF"; ctx.fill();
+  ctx.save(); _roundRect(ctx, cardX, cardY, cardW, cardH, 14); ctx.clip();
+
+  ctx.fillStyle = "#0E1336"; ctx.fillRect(cardX, cardY, cardW, headerH);
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 22px "+FONT;
+  ctx.fillText("🏆 "+POOL_NAME, cardX+24, cardY+34);
+  ctx.fillStyle = "#A8B0DA"; ctx.font = "13px "+FONT;
+  const dateStr = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  ctx.fillText("Leaderboard · "+dateStr, cardX+24, cardY+56);
+
+  let y = cardY + headerH;
+  if(hasPool){
+    ctx.fillStyle = "#E8730C"; ctx.fillRect(cardX, y, cardW, prizeH);
+    ctx.fillStyle = "#FFFFFF"; ctx.font = "700 14px "+FONT; ctx.textAlign = "left";
+    ctx.fillText("Prize Pool "+money(s.pool)+"    🥇 "+money(s.prize1)+"   🥈 "+money(s.prize2)+"   🥉 "+money(s.prize3), cardX+24, y+26);
+    y += prizeH;
+  }
+  ctx.fillStyle = "#5A6196"; ctx.font = "12px "+FONT; ctx.textAlign = "left";
+  ctx.fillText((hasPool? s.playerCount+" players · " : "") + s.gamesPlayed + " matches played · Leader: " + s.leader, cardX+24, y+23);
+  ctx.strokeStyle = "#EEF1FB"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cardX, y+metaH); ctx.lineTo(cardX+cardW, y+metaH); ctx.stroke();
+  y += metaH;
+
+  const hashCenter = tableX + 23, ptsRight = tableX + tableW - 16, perfCenter = tableX + tableW - 80, nameX = tableX + 52, nameMaxRight = perfCenter - 44;
+  ctx.fillStyle = "#0E1336"; ctx.fillRect(tableX, y, tableW, theadH);
+  ctx.fillStyle = "#A8B0DA"; ctx.font = "11px "+FONT;
+  ctx.textAlign="center"; ctx.fillText("#", hashCenter, y+22);
+  ctx.textAlign="left"; ctx.fillText("PLAYER", nameX, y+22);
+  ctx.textAlign="center"; ctx.fillText("🎯", perfCenter, y+22);
+  ctx.textAlign="right"; ctx.fillText("PTS", ptsRight, y+22);
+  y += theadH;
+
+  const medal = rk => rk===1?'🥇':rk===2?'🥈':rk===3?'🥉':String(rk);
+  if(!rows.length){
+    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(tableX, y, tableW, rowH);
+    ctx.fillStyle = "#7A82B4"; ctx.font = "14px "+FONT; ctx.textAlign="center";
+    ctx.fillText("No scores yet.", tableX+tableW/2, y+rowH/2+5); y += rowH;
+  }
+  rows.forEach((r,i)=>{
+    const rk = r.rank || (i+1);
+    ctx.fillStyle = (i%2)? "#F4F6FF" : "#FFFFFF"; ctx.fillRect(tableX, y, tableW, rowH);
+    const midY = y + rowH/2 + 5;
+    ctx.fillStyle = "#0E1336"; ctx.textAlign="center"; ctx.font = "700 15px "+FONT;
+    ctx.fillText(medal(rk), hashCenter, midY);
+    ctx.textAlign="left"; ctx.font = (rk<=3?"700 ":"500 ")+"15px "+FONT; ctx.fillStyle="#0E1336";
+    let nm = r.name||""; const maxW = nameMaxRight - nameX;
+    if(ctx.measureText(nm).width > maxW){ while(nm.length>1 && ctx.measureText(nm+"…").width > maxW) nm = nm.slice(0,-1); nm += "…"; }
+    ctx.fillText(nm, nameX, midY);
+    ctx.textAlign="center"; ctx.font="700 14px "+FONT; ctx.fillStyle="#E8730C";
+    ctx.fillText(String(r.perfect||0), perfCenter, midY);
+    ctx.textAlign="right"; ctx.font="800 16px "+FONT; ctx.fillStyle="#0E1336";
+    ctx.fillText(String(r.pts), ptsRight, midY);
+    y += rowH;
+  });
+
+  ctx.textAlign="center"; ctx.fillStyle="#9098C4"; ctx.font="11px "+FONT;
+  ctx.fillText(SITE_URL+" — good luck! 🍀", cardX+cardW/2, y+24);
+  ctx.restore();
+
+  const isJpg = format === 'jpg';
+  const mime = isJpg ? 'image/jpeg' : 'image/png';
+  const fname = "leaderboard-" + new Date().toISOString().slice(0,10) + (isJpg?'.jpg':'.png');
+  canvas.toBlob(blob=>{
+    if(!blob){ showToast("Could not generate image.","error"); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    showToast("✅ Saved "+fname);
+  }, mime, isJpg?0.95:undefined);
 }
 
 async function loadScoreboard() {
