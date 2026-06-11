@@ -2383,7 +2383,7 @@ function buildEmailLeaderboardHtml(s){
     const rk = r.rank || (i+1);
     return `<tr style="background:${bg}">
       <td style="padding:11px 14px;font-weight:700;color:#0E1336;font-size:15px;text-align:center;width:46px">${medal(rk)}</td>
-      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${rk<=3?'700':'500'}">${_emailEsc(r.name)}</td>
+      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${rk<=3?'700':'500'}">${_emailEsc(r.name)}${r.paid===false?' 💸':''}</td>
       <td style="padding:11px 14px;color:#E8730C;font-size:14px;text-align:center;font-weight:700">${r.perfect}</td>
       <td style="padding:11px 14px;color:#0E1336;font-size:16px;text-align:right;font-weight:800">${r.pts}</td>
     </tr>`;
@@ -2544,6 +2544,7 @@ function downloadLeaderboardImage(format){
     let nm = r.name||""; const maxW = nameMaxRight - nameX;
     if(ctx.measureText(nm).width > maxW){ while(nm.length>1 && ctx.measureText(nm+"…").width > maxW) nm = nm.slice(0,-1); nm += "…"; }
     ctx.fillText(nm, nameX, midY);
+    if(r.paid === false){ const _nw = ctx.measureText(nm).width; ctx.font = "15px "+FONT; ctx.fillText("💸", nameX + _nw + 8, midY); }
     ctx.textAlign="center"; ctx.font="700 14px "+FONT; ctx.fillStyle="#E8730C";
     ctx.fillText(String(r.perfect||0), perfCenter, midY);
     ctx.textAlign="right"; ctx.font="800 16px "+FONT; ctx.fillStyle="#0E1336";
@@ -2625,7 +2626,8 @@ async function loadScoreboard() {
     const ranked = Object.keys(scores).map(uid => ({
       uid, pts: scores[uid], name: userMap[uid] || uid,
       perfect: (details[uid]&&details[uid].perfect)||0,
-      partial: (details[uid]&&details[uid].partial)||0
+      partial: (details[uid]&&details[uid].partial)||0,
+      paid: contributedSet.has(uid)
     }));
     ranked.sort((a,b)=> (b.pts - a.pts)
       || _firstName(a.name).localeCompare(_firstName(b.name))
@@ -2639,7 +2641,7 @@ async function loadScoreboard() {
     document.getElementById("sbLeader").textContent = ranked.length ? ranked[0].name : "-";
 
     lastStandings = {
-      rows: ranked.map(r => ({ name: r.name, perfect: r.perfect, partial: r.partial, pts: r.pts, rank: r.rank })),
+      rows: ranked.map(r => ({ name: r.name, perfect: r.perfect, partial: r.partial, pts: r.pts, rank: r.rank, paid: r.paid })),
       pool: sbPoolAmt, playerCount, paidCount,
       prize1: sbPoolAmt*PRIZE_PCT.first, prize2: sbPoolAmt*PRIZE_PCT.second, prize3: sbPoolAmt*PRIZE_PCT.third,
       gamesPlayed: Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length,
@@ -2654,7 +2656,7 @@ async function loadScoreboard() {
           <td>${medalOf(r.rank)}</td>
           <td><div style="display:flex;align-items:center;gap:10px">
             <div class="avatar">${(r.name||"?")[0].toUpperCase()}</div>
-            ${r.name}
+            ${r.name}${r.paid ? "" : ' <span title="Not paid yet" style="opacity:.85">💸</span>'}
           </div></td>
           <td><span style="color:var(--gold)">${r.perfect} 🎯</span></td>
           <td>${r.partial}</td>
