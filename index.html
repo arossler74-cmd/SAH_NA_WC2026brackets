@@ -977,7 +977,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <div class="section-title">🏆 Leaderboard</div>
         <div class="section-sub">Overall pool standings</div>
       </div>
-      <button class="btn btn-ghost" onclick="loadScoreboard()">↻ Refresh</button>
+      <div style="display:flex;gap:10px"><button class="btn btn-gold" onclick="openEmailLeaderboard()">📧 Email Version</button><button class="btn btn-ghost" onclick="loadScoreboard()">↻ Refresh</button></div>
     </div>
 
     <div class="stats-grid" id="sbStats">
@@ -2369,6 +2369,101 @@ async function saveBet(matchId, homeTeam, awayTeam) {
 // ═══════════════════════════════════════════════════════════
 //  SCOREBOARD
 // ═══════════════════════════════════════════════════════════
+let lastStandings = null;
+
+function _emailEsc(str){ return String(str==null?"":str).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function buildEmailLeaderboardHtml(s){
+  const POOL_NAME = "FIFA World Cup '26 Brackets";
+  const SITE_URL = "wc26brackets.3daytech.com";
+  const dateStr = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const medal = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
+  const rowsHtml = (s.rows && s.rows.length) ? s.rows.map((r,i)=>{
+    const bg = i%2 ? '#F4F6FF' : '#FFFFFF';
+    return `<tr style="background:${bg}">
+      <td style="padding:11px 14px;font-weight:700;color:#0E1336;font-size:15px;text-align:center;width:46px">${medal(i)}</td>
+      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${i<3?'700':'500'}">${_emailEsc(r.name)}</td>
+      <td style="padding:11px 14px;color:#E8730C;font-size:14px;text-align:center;font-weight:700">${r.perfect}</td>
+      <td style="padding:11px 14px;color:#0E1336;font-size:16px;text-align:right;font-weight:800">${r.pts}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="4" style="padding:22px;text-align:center;color:#7A82B4;font-size:14px">No scores yet.</td></tr>`;
+  const prizeStrip = (s.pool != null) ? `<tr><td style="background:#E8730C;padding:12px 24px;color:#ffffff;font-size:14px;font-weight:700">Prize Pool ${money(s.pool)} &nbsp;·&nbsp; 🥇 ${money(s.prize1)} &nbsp; 🥈 ${money(s.prize2)} &nbsp; 🥉 ${money(s.prize3)}</td></tr>` : "";
+  const poolMeta = (s.pool != null) ? `${s.playerCount} players &nbsp;·&nbsp; ` : "";
+  return `<div style="margin:0;padding:0;background:#EEF1FB;font-family:Arial,Helvetica,sans-serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF1FB;padding:20px 0"><tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:560px;max-width:560px;background:#FFFFFF;border-radius:14px;overflow:hidden;border:1px solid #DDE3F7">
+      <tr><td style="background:#0E1336;padding:22px 24px">
+        <div style="color:#FFFFFF;font-size:22px;font-weight:800">🏆 ${_emailEsc(POOL_NAME)}</div>
+        <div style="color:#A8B0DA;font-size:13px;margin-top:4px">Leaderboard · ${dateStr}</div>
+      </td></tr>
+      ${prizeStrip}
+      <tr><td style="padding:11px 24px;color:#5A6196;font-size:12px;border-bottom:1px solid #EEF1FB">${poolMeta}${s.gamesPlayed} matches played &nbsp;·&nbsp; Leader: <strong style="color:#0E1336">${_emailEsc(s.leader)}</strong></td></tr>
+      <tr><td style="padding:6px 12px 10px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+          <tr style="background:#0E1336">
+            <th style="padding:9px 14px;color:#A8B0DA;font-size:11px;text-align:center;width:46px">#</th>
+            <th style="padding:9px 14px;color:#A8B0DA;font-size:11px;text-align:left">PLAYER</th>
+            <th style="padding:9px 14px;color:#A8B0DA;font-size:11px;text-align:center">🎯</th>
+            <th style="padding:9px 14px;color:#A8B0DA;font-size:11px;text-align:right">PTS</th>
+          </tr>
+          ${rowsHtml}
+        </table>
+      </td></tr>
+      <tr><td style="padding:14px 24px;color:#9098C4;font-size:11px;text-align:center;border-top:1px solid #EEF1FB">${_emailEsc(SITE_URL)} — good luck! 🍀</td></tr>
+    </table>
+  </td></tr></table>
+</div>`;
+}
+
+function emailPlainText(s){
+  const lines = ["FIFA World Cup '26 Brackets — Leaderboard"];
+  if(s.pool != null) lines.push("Prize Pool "+money(s.pool)+" | 1st "+money(s.prize1)+" · 2nd "+money(s.prize2)+" · 3rd "+money(s.prize3));
+  lines.push((s.pool!=null? s.playerCount+" players · " : "")+s.gamesPlayed+" matches played");
+  lines.push("");
+  (s.rows||[]).forEach((r,i)=>lines.push((i+1)+". "+r.name+" — "+r.pts+" pts ("+r.perfect+" perfect)"));
+  return lines.join("\n");
+}
+
+function openEmailLeaderboard(){
+  if(!lastStandings || !lastStandings.rows){ showToast("Open or refresh the Leaderboard first.","error"); return; }
+  window._emailHtml = buildEmailLeaderboardHtml(lastStandings);
+  let ov = document.getElementById("emailOverlay");
+  if(!ov){
+    ov = document.createElement("div");
+    ov.id = "emailOverlay";
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px";
+    ov.innerHTML = `<div style="background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#2A3470)">
+      <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)"><strong style="font-size:16px;color:#fff">📧 Email-ready leaderboard</strong><button class="btn btn-ghost" onclick="document.getElementById('emailOverlay').style.display='none'">✕</button></div>
+      <div style="padding:12px 18px;font-size:12px;color:var(--muted)">Click <strong>Copy for email</strong>, then paste (Ctrl/Cmd+V) into Gmail or Outlook — the formatting is preserved.</div>
+      <iframe id="emailFrame" style="border:0;flex:1;min-height:430px;background:#EEF1FB;border-radius:10px;margin:0 16px"></iframe>
+      <div style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border,#2A3470)"><button class="btn btn-ghost" onclick="openEmailTab()">Open in new tab</button><button class="btn btn-gold" onclick="copyEmailLeaderboard()">📋 Copy for email</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+  ov.style.display = "flex";
+  ov.querySelector("#emailFrame").srcdoc = window._emailHtml;
+}
+
+async function copyEmailLeaderboard(){
+  const html = window._emailHtml || "";
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      "text/html": new Blob([html], {type:"text/html"}),
+      "text/plain": new Blob([emailPlainText(lastStandings)], {type:"text/plain"})
+    })]);
+    showToast("✅ Copied — paste into your email");
+  } catch(e) {
+    openEmailTab();
+    showToast("Use the new tab: Select All (Ctrl/Cmd+A) → Copy.", "error", 4500);
+  }
+}
+
+function openEmailTab(){
+  const w = window.open("", "_blank");
+  if(w){ w.document.open(); w.document.write(window._emailHtml || ""); w.document.close(); }
+  else showToast("Allow pop-ups to open the preview tab.", "error");
+}
+
 async function loadScoreboard() {
   document.getElementById("sbBody").innerHTML = `<tr><td colspan="5" class="loader"><div class="spinner"></div></td></tr>`;
   
@@ -2426,6 +2521,14 @@ async function loadScoreboard() {
     document.getElementById("sbParticipants").textContent = playerCount;
     document.getElementById("sbGamesPlayed").textContent = Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length;
     document.getElementById("sbLeader").textContent = sorted.length ? (userMap[sorted[0][0]] || "?") : "-";
+
+    lastStandings = {
+      rows: sorted.map(([uid, pts]) => ({ name: userMap[uid] || uid, perfect: (details[uid]&&details[uid].perfect)||0, partial: (details[uid]&&details[uid].partial)||0, pts })),
+      pool: sbPoolAmt, playerCount, paidCount,
+      prize1: sbPoolAmt*PRIZE_PCT.first, prize2: sbPoolAmt*PRIZE_PCT.second, prize3: sbPoolAmt*PRIZE_PCT.third,
+      gamesPlayed: Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length,
+      leader: sorted.length ? (userMap[sorted[0][0]]||"?") : "-"
+    };
 
     const rankCls = ["rank-1","rank-2","rank-3"];
     document.getElementById("sbBody").innerHTML = sorted.length
