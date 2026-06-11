@@ -2377,12 +2377,13 @@ function buildEmailLeaderboardHtml(s){
   const POOL_NAME = "FIFA World Cup '26 Brackets";
   const SITE_URL = "wc26brackets.3daytech.com";
   const dateStr = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  const medal = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
+  const medal = rk => rk===1?'🥇':rk===2?'🥈':rk===3?'🥉':String(rk);
   const rowsHtml = (s.rows && s.rows.length) ? s.rows.map((r,i)=>{
     const bg = i%2 ? '#F4F6FF' : '#FFFFFF';
+    const rk = r.rank || (i+1);
     return `<tr style="background:${bg}">
-      <td style="padding:11px 14px;font-weight:700;color:#0E1336;font-size:15px;text-align:center;width:46px">${medal(i)}</td>
-      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${i<3?'700':'500'}">${_emailEsc(r.name)}</td>
+      <td style="padding:11px 14px;font-weight:700;color:#0E1336;font-size:15px;text-align:center;width:46px">${medal(rk)}</td>
+      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${rk<=3?'700':'500'}">${_emailEsc(r.name)}</td>
       <td style="padding:11px 14px;color:#E8730C;font-size:14px;text-align:center;font-weight:700">${r.perfect}</td>
       <td style="padding:11px 14px;color:#0E1336;font-size:16px;text-align:right;font-weight:800">${r.pts}</td>
     </tr>`;
@@ -2420,7 +2421,7 @@ function emailPlainText(s){
   if(s.pool != null) lines.push("Prize Pool "+money(s.pool)+" | 1st "+money(s.prize1)+" · 2nd "+money(s.prize2)+" · 3rd "+money(s.prize3));
   lines.push((s.pool!=null? s.playerCount+" players · " : "")+s.gamesPlayed+" matches played");
   lines.push("");
-  (s.rows||[]).forEach((r,i)=>lines.push((i+1)+". "+r.name+" — "+r.pts+" pts ("+r.perfect+" perfect)"));
+  (s.rows||[]).forEach((r,i)=>lines.push((r.rank||(i+1))+". "+r.name+" — "+r.pts+" pts ("+r.perfect+" perfect)"));
   return lines.join("\n");
 }
 
@@ -2517,31 +2518,44 @@ async function loadScoreboard() {
       else if(pts > 0) details[bet.userId].partial++;
     });
 
-    const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+    const _firstName = s => String(s||"").trim().split(/\s+/)[0].toLowerCase();
+    const ranked = Object.keys(scores).map(uid => ({
+      uid, pts: scores[uid], name: userMap[uid] || uid,
+      perfect: (details[uid]&&details[uid].perfect)||0,
+      partial: (details[uid]&&details[uid].partial)||0
+    }));
+    ranked.sort((a,b)=> (b.pts - a.pts)
+      || _firstName(a.name).localeCompare(_firstName(b.name))
+      || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+    // standard competition ranking: tied players share a position (1, 2, 2, 4)
+    let _rank = 0, _prev = null;
+    ranked.forEach((r,i)=>{ if(r.pts !== _prev){ _rank = i+1; _prev = r.pts; } r.rank = _rank; });
+
     document.getElementById("sbParticipants").textContent = playerCount;
     document.getElementById("sbGamesPlayed").textContent = Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length;
-    document.getElementById("sbLeader").textContent = sorted.length ? (userMap[sorted[0][0]] || "?") : "-";
+    document.getElementById("sbLeader").textContent = ranked.length ? ranked[0].name : "-";
 
     lastStandings = {
-      rows: sorted.map(([uid, pts]) => ({ name: userMap[uid] || uid, perfect: (details[uid]&&details[uid].perfect)||0, partial: (details[uid]&&details[uid].partial)||0, pts })),
+      rows: ranked.map(r => ({ name: r.name, perfect: r.perfect, partial: r.partial, pts: r.pts, rank: r.rank })),
       pool: sbPoolAmt, playerCount, paidCount,
       prize1: sbPoolAmt*PRIZE_PCT.first, prize2: sbPoolAmt*PRIZE_PCT.second, prize3: sbPoolAmt*PRIZE_PCT.third,
       gamesPlayed: Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length,
-      leader: sorted.length ? (userMap[sorted[0][0]]||"?") : "-"
+      leader: ranked.length ? ranked[0].name : "-"
     };
 
     const rankCls = ["rank-1","rank-2","rank-3"];
-    document.getElementById("sbBody").innerHTML = sorted.length
-      ? sorted.map(([uid, pts], i) => `
-        <tr class="${rankCls[i]||""}">
-          <td>${i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</td>
+    const medalOf = rk => rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":rk;
+    document.getElementById("sbBody").innerHTML = ranked.length
+      ? ranked.map(r => `
+        <tr class="${rankCls[r.rank-1]||""}">
+          <td>${medalOf(r.rank)}</td>
           <td><div style="display:flex;align-items:center;gap:10px">
-            <div class="avatar">${(userMap[uid]||"?")[0].toUpperCase()}</div>
-            ${userMap[uid]||uid}
+            <div class="avatar">${(r.name||"?")[0].toUpperCase()}</div>
+            ${r.name}
           </div></td>
-          <td><span style="color:var(--gold)">${details[uid]?.perfect||0} 🎯</span></td>
-          <td>${details[uid]?.partial||0}</td>
-          <td class="pts-cell">${pts}</td>
+          <td><span style="color:var(--gold)">${r.perfect} 🎯</span></td>
+          <td>${r.partial}</td>
+          <td class="pts-cell">${r.pts}</td>
         </tr>`).join("")
       : `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">No scores yet. Points will appear as match results are entered.</td></tr>`;
   } catch(e) {
