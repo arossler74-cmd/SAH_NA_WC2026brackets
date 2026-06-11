@@ -2384,16 +2384,22 @@ async function loadScoreboard() {
 
     const userMap = {};
     const adminSet = new Set();
+    const contributedSet = new Set();
     usersSnap.forEach(doc => {
       const d = doc.data();
       if(d.role === "admin") { adminSet.add(doc.id); return; }  // admins manage the pool, not compete
       userMap[doc.id] = d.name || d.email;
+      if(d.contributed) contributedSet.add(doc.id);
     });
 
-    // Prize pool (players only) shown to everyone
-    const playerCount = Object.keys(userMap).length;
-    let paidCount = 0;
-    usersSnap.forEach(doc => { const d = doc.data(); if(d.role !== "admin" && d.contributed) paidCount++; });
+    // Betting is closed: only players who actually placed at least one bet are in the pool.
+    const bettors = new Set();
+    betsSnap.forEach(doc => { const b = doc.data(); if(b.userId && !adminSet.has(b.userId)) bettors.add(b.userId); });
+    const activeUids = Object.keys(userMap).filter(uid => bettors.has(uid));
+
+    // Prize pool (active players only) shown to everyone
+    const playerCount = activeUids.length;
+    const paidCount = activeUids.filter(uid => contributedSet.has(uid)).length;
     const sbPoolAmt = playerCount * BUY_IN_USD;
     document.getElementById("sbPool").textContent = money(sbPoolAmt);
     document.getElementById("sbPoolSub").textContent = paidCount + " of " + playerCount + " paid · $" + BUY_IN_USD + " each";
@@ -2405,7 +2411,7 @@ async function loadScoreboard() {
     const details = {};
     betsSnap.forEach(doc => {
       const bet = doc.data();
-      if(adminSet.has(bet.userId)) return;   // never score admin accounts
+      if(!userMap[bet.userId]) return;   // skip admins, removed users, and non-players
       const result = results[bet.matchId];
       if(!result || result.homeGoals === undefined) return;
       
@@ -2417,7 +2423,7 @@ async function loadScoreboard() {
     });
 
     const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
-    document.getElementById("sbParticipants").textContent = Object.keys(userMap).length;
+    document.getElementById("sbParticipants").textContent = playerCount;
     document.getElementById("sbGamesPlayed").textContent = Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length;
     document.getElementById("sbLeader").textContent = sorted.length ? (userMap[sorted[0][0]] || "?") : "-";
 
@@ -2846,10 +2852,11 @@ async function loadUsers() {
       else if(koIds.has(b.matchId)) t.p2++;
     });
 
-    // Contribution summary — players only (admins manage, they don't contribute)
+    // Contribution summary — only players who actually placed bets count toward the pool
     const players = users.filter(u => u.role !== "admin");
-    const paidCount = players.filter(u => u.contributed).length;
-    const total = players.length;
+    const activePlayers = players.filter(u => tally[u.id] && tally[u.id].p1 > 0);
+    const total = activePlayers.length;
+    const paidCount = activePlayers.filter(u => u.contributed).length;
     const collected = paidCount * BUY_IN_USD;
     const pool = total * BUY_IN_USD;
     const outstanding = pool - collected;
