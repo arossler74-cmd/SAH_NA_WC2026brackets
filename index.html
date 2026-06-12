@@ -700,6 +700,10 @@ select.input-select {
   color: var(--text); font-size: 13px; font-family: 'Archivo', sans-serif;
 }
 select.input-select:focus { outline: none; border-color: var(--gold); }
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:#E11D48;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.3px;animation:livePulse 1.4s ease-in-out infinite;white-space:nowrap;vertical-align:middle}
+.live-badge .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:liveDot 1.4s ease-in-out infinite}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.5)}50%{box-shadow:0 0 0 6px rgba(225,29,72,0)}}
+@keyframes liveDot{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
 </head>
 <body>
@@ -1030,16 +1034,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       </div>
     </div>
     
-        <div class="card" style="margin-bottom:20px">
-      <div class="card-header"><strong>🔑 Results API Key</strong></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Paste your free <strong>football-data.org</strong> API token (register free at football-data.org/client/register). Stored in Firestore, used only by the server to fetch scores — never shown to players. <span id="apiKeyStatus" style="color:#4ADE94;font-weight:700"></span></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <input type="password" id="apiKeyInput" placeholder="Paste football-data.org API token" style="flex:1;min-width:220px;padding:10px 12px;background:var(--dark);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px">
-        <button class="btn btn-gold" onclick="saveApiKey()">Save key</button>
-      </div>
-    </div>
-
-    <div id="adminPhaseControl" class="card" style="margin-bottom:20px">
+        <div id="adminPhaseControl" class="card" style="margin-bottom:20px">
       <div class="card-header"><strong>Betting Phase Control</strong></div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px">The <strong>active phase</strong> is what players see on "My Bets". Open or close each phase's betting independently.</div>
       <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
@@ -2035,8 +2030,9 @@ async function renderSchedule(forceReload) {
       const mid = has
         ? `<span class="sched-score">${r.homeGoals} <span class="x">×</span> ${r.awayGoals}</span>`
         : `<span class="sched-time">${fmtKick(m.kickoff)}</span>`;
-      const status = has ? `<span class="sched-badge done">Full time</span>`
-                    : (started ? `<span class="sched-badge live">Kicked off</span>` : "");
+      const status = (has && r.live) ? liveBadge(r)
+                    : (has ? `<span class="sched-badge done">Full time</span>`
+                    : (started ? `<span class="sched-badge live">Kicked off</span>` : ""));
       html += `
       <div class="sched-row${has ? " has-score" : ""}">
         <div class="sched-kick">${fmtKick(m.kickoff)}<span class="sched-grp">Group ${m.group}</span></div>
@@ -2071,7 +2067,7 @@ function showPage(page) {
   if(page === "schedule") renderSchedule();
   if(page === "scoreboard") loadScoreboard();
   if(page === "admin-users") loadUsers();
-  if(page === "admin-results") { buildResultGroupTabs(); loadAdminResults(); loadPointsConfig(); loadApiKeyStatus(); }
+  if(page === "admin-results") { buildResultGroupTabs(); loadAdminResults(); loadPointsConfig(); }
   if(page === "admin-invites") loadInviteLink();
   if(page === "admin-points") loadPointsConfig();
 }
@@ -2261,6 +2257,11 @@ async function saveGroupBets() {
   setTimeout(() => { document.querySelectorAll(".match-card").forEach(c => c.style.borderColor = ""); }, 2000);
 }
 
+function liveBadge(r){
+  if(!r || !r.live) return "";
+  return `<span class="live-badge"><span class="dot"></span>LIVE${r.liveLabel ? " "+r.liveLabel : ""}</span>`;
+}
+
 function buildMatchCard(match, bet, result) {
   const hasResult = result && result.homeGoals !== undefined;
   // Lock a match for betting if the phase is closed OR an official result is in.
@@ -2273,13 +2274,14 @@ function buildMatchCard(match, bet, result) {
   if(result && result.homeGoals !== undefined && bet) {
     const pts = calcPoints(bet, result);
     const badge = getResultBadge(pts);
-    resultHtml = `<div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-      <span>Result: <strong>${result.homeGoals} × ${result.awayGoals}</strong></span>
+    resultHtml = `<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+      ${result.live ? liveBadge(result) : ""}
+      <span>${result.live ? "Live" : "Result"}: <strong>${result.homeGoals} × ${result.awayGoals}</strong></span>
       <span class="result-badge badge-${badge.cls}">${badge.icon} ${badge.label}</span>
-      <span class="points-chip">+${pts} pts</span>
+      <span class="points-chip">+${pts} pts${result.live ? " (live)" : ""}</span>
     </div>`;
   } else if(result && result.homeGoals !== undefined) {
-    resultHtml = `<div style="margin-top:10px;color:var(--muted);font-size:12px">Result: <strong style="color:var(--text)">${result.homeGoals} × ${result.awayGoals}</strong> — you didn't place a bet</div>`;
+    resultHtml = `<div style="margin-top:10px;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${result.live ? liveBadge(result) : ""}<span>${result.live ? "Live" : "Result"}: <strong style="color:var(--text)">${result.homeGoals} × ${result.awayGoals}</strong> — you didn't place a bet</span></div>`;
   }
 
   const homeFlag = flagImg(match.homeTeam);
@@ -2291,7 +2293,7 @@ function buildMatchCard(match, bet, result) {
       <span class="tag">${match.group ? "Group "+match.group : (match.round||"")}</span>
       <span>📅 ${match.date || ""}${match.kickoff ? " · "+fmtKick(match.kickoff) : ""}</span>
       ${match.city ? `<span>📍 ${match.city}</span>` : ""}
-      ${hasResult ? '<span style="color:var(--green)">🔒 Result in — locked</span>' : (locked ? '<span style="color:var(--red)">🔒 Betting Closed</span>' : '')}
+      ${result && result.live ? liveBadge(result) : (hasResult ? '<span style="color:var(--green)">🔒 Result in — locked</span>' : (locked ? '<span style="color:var(--red)">🔒 Betting Closed</span>' : ''))}
     </div>
     <div class="match-teams">
       <div class="team-name">
@@ -2569,6 +2571,18 @@ function downloadLeaderboardImage(format){
   }, mime, isJpg?0.95:undefined);
 }
 
+// Auto-refresh open data views every 5 minutes so scores update without a manual refresh
+setInterval(() => {
+  try {
+    if(!firebase.auth().currentUser) return;
+    const active = document.querySelector(".page.active");
+    const id = active ? active.id : "";
+    if(id === "page-scoreboard" && typeof loadScoreboard === "function") loadScoreboard();
+    else if(id === "page-admin-results" && typeof isAdmin !== "undefined" && isAdmin && typeof loadAdminResults === "function") loadAdminResults();
+    else if(id === "page-schedule" && typeof renderSchedule === "function") renderSchedule();
+  } catch(e) {}
+}, 5 * 60 * 1000);
+
 async function loadScoreboard() {
   document.getElementById("sbBody").innerHTML = `<tr><td colspan="5" class="loader"><div class="spinner"></div></td></tr>`;
   
@@ -2632,9 +2646,9 @@ async function loadScoreboard() {
     ranked.sort((a,b)=> (b.pts - a.pts)
       || _firstName(a.name).localeCompare(_firstName(b.name))
       || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-    // standard competition ranking: tied players share a position (1, 2, 2, 4)
+    // dense ranking: each distinct points total is one place; ties share it (1, 2, 2, 3)
     let _rank = 0, _prev = null;
-    ranked.forEach((r,i)=>{ if(r.pts !== _prev){ _rank = i+1; _prev = r.pts; } r.rank = _rank; });
+    ranked.forEach((r)=>{ if(r.pts !== _prev){ _rank += 1; _prev = r.pts; } r.rank = _rank; });
 
     document.getElementById("sbParticipants").textContent = playerCount;
     document.getElementById("sbGamesPlayed").textContent = Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length;
@@ -2984,58 +2998,19 @@ async function loadApiKeyStatus() {
 
 async function fetchLiveResults() {
   if(!isAdmin) return;
-  showToast("🔄 Fetching results…");
+  showToast("🔄 Fetching live scores…");
   try {
     if(typeof firebase.functions !== "function") throw new Error("Functions SDK not loaded");
-    const call = firebase.functions().httpsCallable("fetchWcResults");
-    const resp = await call({});
-    const fixtures = (resp.data && resp.data.fixtures) || [];
-    if(!fixtures.length) { showToast("No finished matches yet.", "error", 3500); return; }
-
-    // Normalize team names + aliases so the API names match the app's names.
-    const ALIAS = {
-      "korea republic":"south korea","korea south":"south korea","south korea":"south korea",
-      "czech republic":"czechia","czechia":"czechia",
-      "usa":"united states","united states of america":"united states","united states":"united states",
-      "bosnia and herzegovina":"bosnia","bosnia herzegovina":"bosnia","bosnia":"bosnia",
-      "turkiye":"turkey","turkey":"turkey",
-      "cote d ivoire":"ivory coast","cote divoire":"ivory coast","ivory coast":"ivory coast",
-      "ir iran":"iran","islamic republic of iran":"iran","iran":"iran",
-      "cabo verde":"cape verde","cape verde":"cape verde",
-      "congo dr":"dr congo","democratic republic of the congo":"dr congo","dr congo":"dr congo","congo democratic republic":"dr congo"
-    };
-    const norm = (s) => {
-      const base = (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-        .toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
-      return ALIAS[base] || base;
-    };
-
-    const byPair = {};
-    GROUP_MATCHES.forEach(m => { byPair[[norm(m.homeTeam), norm(m.awayTeam)].sort().join("|")] = m; });
-
-    let updated = 0; const unmatched = [];
-    for(const fx of fixtures) {
-      if(fx.homeGoals == null || fx.awayGoals == null) continue;
-      const nh = norm(fx.home), na = norm(fx.away);
-      const m = byPair[[nh, na].sort().join("|")];
-      if(!m) { unmatched.push(fx.home + " vs " + fx.away); continue; }
-      const sameOrder = norm(m.homeTeam) === nh;
-      await col("results").doc(m.id).set({
-        matchId: m.id, homeTeam: m.homeTeam, awayTeam: m.awayTeam,
-        homeGoals: sameOrder ? fx.homeGoals : fx.awayGoals,
-        awayGoals: sameOrder ? fx.awayGoals : fx.homeGoals,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(), auto: true
-      });
-      updated++;
-    }
-    showToast("✅ Updated " + updated + " result" + (updated===1?"":"s") + (unmatched.length ? " · " + unmatched.length + " unmatched (check console)" : ""));
-    if(unmatched.length) console.warn("Unmatched fixtures:", unmatched);
+    const resp = await firebase.functions().httpsCallable("fetchWcResults")({});
+    const d = resp.data || {};
+    const n = d.count || 0, live = d.live || 0;
+    showToast("✅ Updated " + n + " result" + (n===1?"":"s") + (live ? " · " + live + " live ●" : ""));
+    if(d.unmatched && d.unmatched.length) console.warn("Unmatched fixtures:", d.unmatched);
     if(typeof loadAdminResults === "function") loadAdminResults();
+    if(typeof loadScoreboard === "function") loadScoreboard();
   } catch(e) {
     const msg = e.message || String(e);
-    if(/not-found|INTERNAL|not deployed|Functions SDK/i.test(msg))
-      showToast("Results function not set up yet — see setup notes.", "error", 4500);
-    else showToast("Fetch failed: " + msg, "error", 4500);
+    showToast(/not-found|INTERNAL|not deployed|Functions SDK/i.test(msg) ? "Results function not deployed yet." : ("Fetch failed: " + msg), "error", 4500);
   }
 }
 
