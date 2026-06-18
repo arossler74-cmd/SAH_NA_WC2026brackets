@@ -729,6 +729,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
   <div class="nav-tab" data-page="results" onclick="showPage('results')">📊 Results</div>
     <div class="nav-tab" data-page="schedule" onclick="showPage('schedule')">📅 Calendar</div>
   <div class="nav-tab" data-page="scoreboard" onclick="showPage('scoreboard')">🏆 Leaderboard</div>
+  <div class="nav-tab" data-page="phase2forecast" onclick="showPage('phase2forecast')">🔮 Phase 2 Forecast</div>
   <div class="nav-tab admin-only" data-page="admin-results" onclick="showPage('admin-results')" style="display:none">📋 Enter Results</div>
   <div class="nav-tab admin-only" data-page="admin-users" onclick="showPage('admin-users')" style="display:none">👥 Members</div>
   <div class="nav-tab admin-only" data-page="admin-invites" onclick="showPage('admin-invites')" style="display:none">🔗 Invites</div>
@@ -953,7 +954,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
           <div class="section-title">📅 Match Calendar</div>
           <div class="section-sub">Group stage fixtures · times shown in your local zone (<span id="schedTZ"></span>)</div>
         </div>
-        <button class="btn btn-ghost" onclick="renderSchedule(true)">↻ Refresh scores</button>
+        <div style="display:flex;gap:10px"><button class="btn btn-accent" onclick="scrollToToday()">📍 Go to today</button><button class="btn btn-ghost" onclick="renderSchedule(true)">↻ Refresh scores</button></div>
       </div>
       <div id="scheduleList"><div class="loader"><div class="spinner"></div>Loading...</div></div>
     </div>
@@ -986,7 +987,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 
     <div class="stats-grid" id="sbStats">
       <div class="stat-card"><div class="stat-label">Participants</div><div class="stat-value" id="sbParticipants">-</div></div>
-      <div class="stat-card"><div class="stat-label">Matches Played</div><div class="stat-value" id="sbGamesPlayed">-</div></div>
+      <div class="stat-card"><div class="stat-label">Matches Played</div><div class="stat-value" id="sbGamesPlayed">-</div><div style="height:6px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:8px"><i id="sbGamesBar" style="display:block;height:100%;width:0;background:var(--orange);transition:width .45s ease"></i></div></div>
       <div class="stat-card"><div class="stat-label">Leader</div><div class="stat-value" id="sbLeader" style="font-size:22px;padding-top:6px">-</div></div>
     </div>
 
@@ -1021,6 +1022,19 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 </div>
 
 <!-- ═══════════════════════════════════ ADMIN: RESULTS ══ -->
+<div id="page-phase2forecast" class="page">
+  <div class="main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🔮 Phase 2 Forecast</div>
+        <div class="section-sub">Who advances to the knockouts — based on everyone's picks</div>
+      </div>
+      <button class="btn btn-ghost" onclick="loadPhase2Forecast()">↻ Refresh</button>
+    </div>
+    <div id="p2fContent"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
 <div id="page-admin-results" class="page">
   <div class="main">
     <div class="section-header">
@@ -1716,7 +1730,7 @@ async function onAuthChange(user) {
     if(isAdmin) {
       showPage("admin-results");   // admins land on their control panel, not betting
     } else {
-      showPage("instructions");   // players land on the welcome / rules screen first
+      showPage("schedule");   // players land on the live match calendar
       loadBets();
     }
   } else {
@@ -2019,10 +2033,15 @@ async function renderSchedule(forceReload) {
   if(!days.length) { list.innerHTML = `<div style="padding:20px;color:var(--muted)">No fixtures.</div>`; return; }
 
   const now = Date.now();
+  const todayKey = localDayKey(Date.now());
+  const targetDay = days.find(d => d >= todayKey) || days[days.length-1];
+  window._schedTodayId = "schedday-" + targetDay;
   let html = "";
   for(const day of days) {
     const ms = byDay[day].sort((a,b) => new Date(a.kickoff) - new Date(b.kickoff));
-    html += `<div class="sched-day"><div class="sched-day-head">${fmtDayHeader(ms[0].kickoff)}</div>`;
+    const _tag = day===todayKey ? ' <span style="font-size:11px;color:var(--accent,#4256E8);font-weight:800">\u2022 today</span>'
+               : (day===targetDay ? ' <span style="font-size:11px;color:var(--accent,#4256E8);font-weight:800">\u2022 next up</span>' : '');
+    html += `<div class="sched-day" id="schedday-${day}"${day===targetDay?' data-today="1"':''}><div class="sched-day-head">${fmtDayHeader(ms[0].kickoff)}${_tag}</div>`;
     for(const m of ms) {
       const r = res[m.id];
       const has = r && r.homeGoals !== undefined;
@@ -2049,6 +2068,13 @@ async function renderSchedule(forceReload) {
   list.innerHTML = html;
 }
 
+function scrollToToday(){
+  const el = (window._schedTodayId && document.getElementById(window._schedTodayId)) || document.querySelector(".sched-day");
+  if(!el) return;
+  const y = el.getBoundingClientRect().top + window.pageYOffset - 76;
+  window.scrollTo({ top: Math.max(0,y), behavior: "smooth" });
+}
+
 function showPage(page) {
   // Guard admin-only pages
   const adminPages = ["admin-results","admin-users","admin-invites","admin-points"];
@@ -2066,6 +2092,7 @@ function showPage(page) {
   if(page === "results") loadPublicResults();
   if(page === "schedule") renderSchedule();
   if(page === "scoreboard") loadScoreboard();
+  if(page === "phase2forecast") loadPhase2Forecast();
   if(page === "admin-users") loadUsers();
   if(page === "admin-results") { buildResultGroupTabs(); loadAdminResults(); loadPointsConfig(); }
   if(page === "admin-invites") loadInviteLink();
@@ -2571,7 +2598,7 @@ function downloadLeaderboardImage(format){
   }, mime, isJpg?0.95:undefined);
 }
 
-// Auto-refresh open data views every 5 minutes so scores update without a manual refresh
+// Auto-refresh open data views every 1 minute so scores update without a manual refresh
 setInterval(() => {
   try {
     if(!firebase.auth().currentUser) return;
@@ -2581,7 +2608,57 @@ setInterval(() => {
     else if(id === "page-admin-results" && typeof isAdmin !== "undefined" && isAdmin && typeof loadAdminResults === "function") loadAdminResults();
     else if(id === "page-schedule" && typeof renderSchedule === "function") renderSchedule();
   } catch(e) {}
-}, 5 * 60 * 1000);
+}, 60 * 1000);
+
+let _sbResults = {}, _sbNames = {}, _sbBetsByUser = {};
+
+// Click a leaderboard row to see that player's (or the AI's) picks vs the real results.
+function openUserBreakdown(uid){
+  const name = _sbNames[uid] || "Player";
+  const bets = _sbBetsByUser[uid] || {};
+  const results = _sbResults || {};
+  const order = (typeof ALL_MATCHES !== "undefined" && ALL_MATCHES && ALL_MATCHES.length) ? ALL_MATCHES : GROUP_MATCHES;
+  let total = 0, perfect = 0, played = 0;
+  const rowsHtml = order.map(m => {
+    const r = results[m.id];
+    if(!r || r.homeGoals === undefined) return "";
+    played++;
+    const bet = bets[m.id];
+    let pickCell, ptsCell;
+    if(bet){
+      const pts = calcPoints(bet, r); total += pts;
+      const b = getResultBadge(pts);
+      if(pts >= pointsConfig.perfect) perfect++;
+      pickCell = `<strong>${bet.homeGoals} \u00d7 ${bet.awayGoals}</strong>`;
+      ptsCell = `<span class="result-badge badge-${b.cls}" style="font-size:10px">${b.icon}</span> <strong>+${pts}</strong>`;
+    } else {
+      pickCell = `<span style="color:var(--muted)">no pick</span>`;
+      ptsCell = `<span style="color:var(--muted)">\u2014</span>`;
+    }
+    const liveTag = r.live ? ` <span class="live-badge"><span class="dot"></span>LIVE${r.liveLabel ? " "+r.liveLabel : ""}</span>` : "";
+    return `<tr style="border-top:1px solid var(--border,#2A3470)">
+      <td style="padding:9px 12px;font-size:13px">${flagImg(m.homeTeam)} ${m.homeTeam} <span style="color:var(--muted)">\u00d7</span> ${m.awayTeam} ${flagImg(m.awayTeam)}${liveTag}</td>
+      <td style="padding:9px 12px;text-align:center;font-size:13px">${pickCell}</td>
+      <td style="padding:9px 12px;text-align:center;font-weight:800">${r.homeGoals} \u00d7 ${r.awayGoals}</td>
+      <td style="padding:9px 12px;text-align:right;white-space:nowrap;font-size:13px">${ptsCell}</td>
+    </tr>`;
+  }).join("");
+  const body = played ? `<table style="width:100%;border-collapse:collapse">
+      <tr style="text-align:left;color:var(--muted);font-size:11px">
+        <th style="padding:9px 12px">MATCH</th><th style="padding:9px 12px;text-align:center">PICK</th><th style="padding:9px 12px;text-align:center">RESULT</th><th style="padding:9px 12px;text-align:right">PTS</th>
+      </tr>${rowsHtml}</table>`
+    : `<div style="padding:28px;text-align:center;color:var(--muted)">No finished matches yet for this player.</div>`;
+  let ov = document.getElementById("breakdownOverlay");
+  if(!ov){ ov = document.createElement("div"); ov.id = "breakdownOverlay"; ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px"; document.body.appendChild(ov); }
+  ov.innerHTML = `<div style="background:var(--card);border-radius:16px;max-width:660px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#2A3470)">
+    <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)">
+      <div><strong style="font-size:17px;color:#fff">${name}</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">${total} pts \u00b7 ${perfect} perfect \u00b7 ${played} played</div></div>
+      <button class="btn btn-ghost" onclick="document.getElementById('breakdownOverlay').remove()">\u2715</button>
+    </div>
+    <div style="overflow:auto">${body}</div>
+  </div>`;
+  ov.style.display = "flex";
+}
 
 async function loadScoreboard() {
   document.getElementById("sbBody").innerHTML = `<tr><td colspan="5" class="loader"><div class="spinner"></div></td></tr>`;
@@ -2595,20 +2672,23 @@ async function loadScoreboard() {
 
     const results = {};
     resultsSnap.forEach(doc => { results[doc.id] = doc.data(); });
+    _sbResults = results; _sbBetsByUser = {};
 
     const userMap = {};
     const adminSet = new Set();
     const contributedSet = new Set();
+    const botSet = new Set();
     usersSnap.forEach(doc => {
       const d = doc.data();
       if(d.role === "admin") { adminSet.add(doc.id); return; }  // admins manage the pool, not compete
+      if(d.role === "bot" || d.bot) { userMap[doc.id] = d.name || "🤖 AI Prediction"; botSet.add(doc.id); return; }
       userMap[doc.id] = d.name || d.email;
       if(d.contributed) contributedSet.add(doc.id);
     });
 
     // Betting is closed: only players who actually placed at least one bet are in the pool.
     const bettors = new Set();
-    betsSnap.forEach(doc => { const b = doc.data(); if(b.userId && !adminSet.has(b.userId)) bettors.add(b.userId); });
+    betsSnap.forEach(doc => { const b = doc.data(); if(b.userId && !adminSet.has(b.userId) && !botSet.has(b.userId)) bettors.add(b.userId); });
     const activeUids = Object.keys(userMap).filter(uid => bettors.has(uid));
 
     // Prize pool (active players only) shown to everyone
@@ -2626,6 +2706,7 @@ async function loadScoreboard() {
     betsSnap.forEach(doc => {
       const bet = doc.data();
       if(!userMap[bet.userId]) return;   // skip admins, removed users, and non-players
+      (_sbBetsByUser[bet.userId] || (_sbBetsByUser[bet.userId] = {}))[bet.matchId] = bet;
       const result = results[bet.matchId];
       if(!result || result.homeGoals === undefined) return;
       
@@ -2636,12 +2717,33 @@ async function loadScoreboard() {
       else if(pts > 0) details[bet.userId].partial++;
     });
 
+    // 🤖 AI Prediction — virtual competitor. Predicts EVERY group match from FIFA
+    // ratings only (predictScore baseline), never looking at the real result, so it stays
+    // unbiased even on matches already played. Not part of the pool; ranked for comparison.
+    const AI_ID = "__ai_prediction__";
+    {
+      let aiPts = 0, aiPerfect = 0, aiPartial = 0; const aiBets = {};
+      GROUP_MATCHES.forEach(m => {
+        const pick = predictScore(m.homeTeam, m.awayTeam);
+        aiBets[m.id] = { userId:AI_ID, matchId:m.id, homeTeam:m.homeTeam, awayTeam:m.awayTeam, homeGoals:pick.home, awayGoals:pick.away };
+        const result = results[m.id];
+        if(!result || result.homeGoals === undefined) return;
+        const pts = calcPoints(aiBets[m.id], result);
+        aiPts += pts;
+        if(pts >= pointsConfig.perfect) aiPerfect++; else if(pts > 0) aiPartial++;
+      });
+      userMap[AI_ID] = "🤖 AI Prediction";
+      scores[AI_ID] = aiPts; details[AI_ID] = { perfect: aiPerfect, partial: aiPartial };
+      _sbBetsByUser[AI_ID] = aiBets; _sbNames = userMap;
+    }
+
     const _firstName = s => String(s||"").trim().split(/\s+/)[0].toLowerCase();
     const ranked = Object.keys(scores).map(uid => ({
       uid, pts: scores[uid], name: userMap[uid] || uid,
       perfect: (details[uid]&&details[uid].perfect)||0,
       partial: (details[uid]&&details[uid].partial)||0,
-      paid: contributedSet.has(uid)
+      paid: contributedSet.has(uid),
+      bot: uid === "__ai_prediction__"
     }));
     ranked.sort((a,b)=> (b.pts - a.pts)
       || _firstName(a.name).localeCompare(_firstName(b.name))
@@ -2651,7 +2753,11 @@ async function loadScoreboard() {
     ranked.forEach((r)=>{ if(r.pts !== _prev){ _rank += 1; _prev = r.pts; } r.rank = _rank; });
 
     document.getElementById("sbParticipants").textContent = playerCount;
-    document.getElementById("sbGamesPlayed").textContent = Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length;
+    const _grpIds = new Set(GROUP_MATCHES.map(m=>m.id));
+    const _grpPlayed = Object.keys(results).filter(id => _grpIds.has(id) && results[id].homeGoals!==undefined).length;
+    const _grpTotal = GROUP_MATCHES.length;
+    document.getElementById("sbGamesPlayed").textContent = _grpPlayed + "/" + _grpTotal;
+    { const _b = document.getElementById("sbGamesBar"); if(_b) _b.style.width = (_grpTotal ? Math.round(_grpPlayed/_grpTotal*100) : 0) + "%"; }
     document.getElementById("sbLeader").textContent = ranked.length ? ranked[0].name : "-";
 
     lastStandings = {
@@ -2666,11 +2772,11 @@ async function loadScoreboard() {
     const medalOf = rk => rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":rk;
     document.getElementById("sbBody").innerHTML = ranked.length
       ? ranked.map(r => `
-        <tr class="${rankCls[r.rank-1]||""}">
+        <tr class="${rankCls[r.rank-1]||""}${r.bot?' ai-row':''}" onclick="openUserBreakdown('${r.uid}')" style="cursor:pointer${r.bot?';background:rgba(66,86,232,.12)':''}">
           <td>${medalOf(r.rank)}</td>
           <td><div style="display:flex;align-items:center;gap:10px">
-            <div class="avatar">${(r.name||"?")[0].toUpperCase()}</div>
-            ${r.name}${r.paid ? "" : ' <span title="Not paid yet" style="opacity:.85">💸</span>'}
+            <div class="avatar"${r.bot?' style="background:#4256E8"':''}>${r.bot?'🤖':(r.name||"?")[0].toUpperCase()}</div>
+            ${r.name}${r.bot ? ' <span title="AI benchmark — not in the pool" style="font-size:11px;color:var(--accent,#7B86E8)">· benchmark</span>' : (r.paid ? "" : ' <span title="Not paid yet" style="opacity:.85">💸</span>')}
           </div></td>
           <td><span style="color:var(--gold)">${r.perfect} 🎯</span></td>
           <td>${r.partial}</td>
@@ -2680,6 +2786,88 @@ async function loadScoreboard() {
   } catch(e) {
     document.getElementById("sbBody").innerHTML = `<tr><td colspan="5" style="color:var(--red);text-align:center;padding:20px">Error: ${e.message}</td></tr>`;
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHASE 2 FORECAST — projected group standings from the consensus
+//  of everyone's Phase-1 picks (majority W/D/L for the result,
+//  average predicted goals for the tiebreak). Top 2 of each group advance.
+//  Tiebreak: points → goal difference → goals for. Read-only, all users.
+// ═══════════════════════════════════════════════════════════
+async function loadPhase2Forecast(){
+  const box = document.getElementById("p2fContent");
+  if(!box) return;
+  box.innerHTML = `<div class="loader"><div class="spinner"></div>Loading\u2026</div>`;
+  let betsSnap;
+  try { betsSnap = await col("bets").get(); }
+  catch(e){ box.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; return; }
+
+  const byMatch = {};
+  betsSnap.forEach(doc => {
+    const b = doc.data();
+    if(!b || !b.matchId || b.homeGoals === undefined || b.awayGoals === undefined) return;
+    (byMatch[b.matchId] || (byMatch[b.matchId] = [])).push(b);
+  });
+
+  let totalPicks = 0;
+  const groupsHtml = Object.entries(GROUPS).map(([grp, teams]) => {
+    const matches = GROUP_MATCHES.filter(m => m.group === grp);
+    const tbl = {}; teams.forEach(t => tbl[t] = { team:t, pts:0, gf:0, ga:0 });
+    let withPicks = 0; const lines = [];
+    matches.forEach(m => {
+      const bs = byMatch[m.id] || [];
+      if(!bs.length){ lines.push({ m, n:0 }); return; }
+      withPicks++; totalPicks += bs.length;
+      let hw=0, dr=0, aw=0, sh=0, sa=0;
+      bs.forEach(b => { const x=+b.homeGoals, y=+b.awayGoals; sh+=x; sa+=y; if(x>y) hw++; else if(x<y) aw++; else dr++; });
+      const avgH = sh/bs.length, avgA = sa/bs.length;
+      let outcome;
+      if(hw>dr && hw>aw) outcome="H";
+      else if(aw>dr && aw>hw) outcome="A";
+      else if(dr>=hw && dr>=aw) outcome="D";
+      else outcome = avgH>avgA ? "H" : (avgA>avgH ? "A" : "D");
+      if(hw===aw && hw>dr) outcome = avgH>avgA ? "H" : (avgA>avgH ? "A" : "D"); // break H/A tie by avg
+      const H=tbl[m.homeTeam], A=tbl[m.awayTeam];
+      H.gf+=avgH; H.ga+=avgA; A.gf+=avgA; A.ga+=avgH;
+      if(outcome==="H") H.pts+=3; else if(outcome==="A") A.pts+=3; else { H.pts++; A.pts++; }
+      lines.push({ m, n:bs.length, outcome, avgH, avgA });
+    });
+    const standings = Object.values(tbl).map(t => ({ ...t, gd:t.gf-t.ga }))
+      .sort((a,b)=> b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || a.team.localeCompare(b.team));
+    const rowsHtml = standings.map((t,i)=>{
+      const q = i<2, pos=i+1;
+      return `<tr style="${q?'background:rgba(22,179,100,.10)':''}">
+        <td style="padding:7px 10px;text-align:center;font-weight:800;color:${q?'var(--green,#16B364)':'var(--muted)'}">${pos}</td>
+        <td style="padding:7px 10px">${flagImg(t.team)} ${t.team}${q?' <span style="font-size:10px;color:var(--green,#16B364)">\u2714 advances</span>':''}</td>
+        <td style="padding:7px 10px;text-align:center;font-weight:800">${t.pts}</td>
+        <td style="padding:7px 10px;text-align:center">${t.gd>0?'+':''}${t.gd.toFixed(1)}</td>
+        <td style="padding:7px 10px;text-align:center;color:var(--muted)">${t.gf.toFixed(1)}</td>
+      </tr>`;
+    }).join("");
+    const matchLines = lines.map(l => {
+      if(!l.n) return `<div style="color:var(--muted)">${l.m.homeTeam} \u00d7 ${l.m.awayTeam} \u2014 <em>no picks yet</em></div>`;
+      const lbl = l.outcome==="H" ? l.m.homeTeam+" win" : l.outcome==="A" ? l.m.awayTeam+" win" : "draw";
+      return `<div>${l.m.homeTeam} <b>${l.avgH.toFixed(1)}\u2013${l.avgA.toFixed(1)}</b> ${l.m.awayTeam} <span style="color:var(--muted)">\u00b7 ${lbl} \u00b7 ${l.n} pick${l.n>1?'s':''}</span></div>`;
+    }).join("");
+    return `<div class="card" style="margin:0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <div class="section-title" style="font-size:20px">Group ${grp}</div>
+        <div style="font-size:11px;color:var(--muted)">${withPicks}/6 matches</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <tr style="text-align:left;color:var(--muted);font-size:11px">
+          <th style="padding:6px 10px;text-align:center">#</th><th style="padding:6px 10px">TEAM</th>
+          <th style="padding:6px 10px;text-align:center">PTS</th><th style="padding:6px 10px;text-align:center">GD</th><th style="padding:6px 10px;text-align:center">GF</th>
+        </tr>${rowsHtml}
+      </table>
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--accent,#7B86E8)">consensus per match</summary>
+        <div style="font-size:12px;line-height:1.7;margin-top:6px">${matchLines}</div>
+      </details>
+    </div>`;
+  }).join("");
+
+  box.innerHTML = `<div style="margin-bottom:14px;font-size:13px;color:var(--muted)">Projected group standings from the <b style="color:#fff">consensus of everyone's Phase\u00a01 picks</b>: per match, the <b style="color:#fff">majority</b> win/draw/loss sets the result and the <b style="color:#fff">average</b> predicted goals set the tiebreak. Top\u00a02 of each group advance. <span>(${totalPicks} picks counted \u00b7 tiebreak: points \u2192 goal diff \u2192 goals for)</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">${groupsHtml}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════
