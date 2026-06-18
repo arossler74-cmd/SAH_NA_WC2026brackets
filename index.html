@@ -2409,10 +2409,11 @@ function buildEmailLeaderboardHtml(s){
   const medal = rk => rk===1?'🥇':rk===2?'🥈':rk===3?'🥉':String(rk);
   const rowsHtml = (s.rows && s.rows.length) ? s.rows.map((r,i)=>{
     const bg = i%2 ? '#F4F6FF' : '#FFFFFF';
-    const rk = r.rank || (i+1);
+    const isBot = r.bot;
+    const rk = r.rank;
     return `<tr style="background:${bg}">
-      <td style="padding:11px 14px;font-weight:700;color:#0E1336;font-size:15px;text-align:center;width:46px">${medal(rk)}</td>
-      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${rk<=3?'700':'500'}">${_emailEsc(r.name)}${r.paid===false?' 💸':''}</td>
+      <td style="padding:11px 14px;font-weight:700;color:#0E1336;font-size:15px;text-align:center;width:46px">${isBot ? '🤖' : medal(rk)}</td>
+      <td style="padding:11px 14px;color:#0E1336;font-size:15px;font-weight:${(!isBot && rk<=3)?'700':'500'}">${_emailEsc(r.name)}${(!isBot && r.paid===false)?' 💸':''}</td>
       <td style="padding:11px 14px;color:#E8730C;font-size:14px;text-align:center;font-weight:700">${r.perfect}</td>
       <td style="padding:11px 14px;color:#0E1336;font-size:16px;text-align:right;font-weight:800">${r.pts}</td>
     </tr>`;
@@ -2564,16 +2565,17 @@ function downloadLeaderboardImage(format){
     ctx.fillText("No scores yet.", tableX+tableW/2, y+rowH/2+5); y += rowH;
   }
   rows.forEach((r,i)=>{
-    const rk = r.rank || (i+1);
+    const isBot = r.bot;
+    const rk = r.rank;
     ctx.fillStyle = (i%2)? "#F4F6FF" : "#FFFFFF"; ctx.fillRect(tableX, y, tableW, rowH);
     const midY = y + rowH/2 + 5;
     ctx.fillStyle = "#0E1336"; ctx.textAlign="center"; ctx.font = "700 15px "+FONT;
-    ctx.fillText(medal(rk), hashCenter, midY);
-    ctx.textAlign="left"; ctx.font = (rk<=3?"700 ":"500 ")+"15px "+FONT; ctx.fillStyle="#0E1336";
+    ctx.fillText(isBot ? '🤖' : medal(rk), hashCenter, midY);
+    ctx.textAlign="left"; ctx.font = ((!isBot && rk<=3)?"700 ":"500 ")+"15px "+FONT; ctx.fillStyle="#0E1336";
     let nm = r.name||""; const maxW = nameMaxRight - nameX;
     if(ctx.measureText(nm).width > maxW){ while(nm.length>1 && ctx.measureText(nm+"…").width > maxW) nm = nm.slice(0,-1); nm += "…"; }
     ctx.fillText(nm, nameX, midY);
-    if(r.paid === false){ const _nw = ctx.measureText(nm).width; ctx.font = "15px "+FONT; ctx.fillText("💸", nameX + _nw + 8, midY); }
+    if(!isBot && r.paid === false){ const _nw = ctx.measureText(nm).width; ctx.font = "15px "+FONT; ctx.fillText("💸", nameX + _nw + 8, midY); }
     ctx.textAlign="center"; ctx.font="700 14px "+FONT; ctx.fillStyle="#E8730C";
     ctx.fillText(String(r.perfect||0), perfCenter, midY);
     ctx.textAlign="right"; ctx.font="800 16px "+FONT; ctx.fillStyle="#0E1336";
@@ -2750,7 +2752,7 @@ async function loadScoreboard() {
       || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     // dense ranking: each distinct points total is one place; ties share it (1, 2, 2, 3)
     let _rank = 0, _prev = null;
-    ranked.forEach((r)=>{ if(r.pts !== _prev){ _rank += 1; _prev = r.pts; } r.rank = _rank; });
+    ranked.forEach((r)=>{ if(r.bot){ r.rank = null; return; } if(r.pts !== _prev){ _rank += 1; _prev = r.pts; } r.rank = _rank; });
 
     document.getElementById("sbParticipants").textContent = playerCount;
     const _grpIds = new Set(GROUP_MATCHES.map(m=>m.id));
@@ -2758,14 +2760,15 @@ async function loadScoreboard() {
     const _grpTotal = GROUP_MATCHES.length;
     document.getElementById("sbGamesPlayed").textContent = _grpPlayed + "/" + _grpTotal;
     { const _b = document.getElementById("sbGamesBar"); if(_b) _b.style.width = (_grpTotal ? Math.round(_grpPlayed/_grpTotal*100) : 0) + "%"; }
-    document.getElementById("sbLeader").textContent = ranked.length ? ranked[0].name : "-";
+    const _topHuman = ranked.find(r => !r.bot);
+    document.getElementById("sbLeader").textContent = _topHuman ? _topHuman.name : "-";
 
     lastStandings = {
-      rows: ranked.map(r => ({ name: r.name, perfect: r.perfect, partial: r.partial, pts: r.pts, rank: r.rank, paid: r.paid })),
+      rows: ranked.map(r => ({ name: r.name, perfect: r.perfect, partial: r.partial, pts: r.pts, rank: r.rank, paid: r.paid, bot: r.bot })),
       pool: sbPoolAmt, playerCount, paidCount,
       prize1: sbPoolAmt*PRIZE_PCT.first, prize2: sbPoolAmt*PRIZE_PCT.second, prize3: sbPoolAmt*PRIZE_PCT.third,
       gamesPlayed: Object.keys(results).filter(r=>results[r].homeGoals!==undefined).length,
-      leader: ranked.length ? ranked[0].name : "-"
+      leader: _topHuman ? _topHuman.name : "-"
     };
 
     const rankCls = ["rank-1","rank-2","rank-3"];
@@ -2773,7 +2776,7 @@ async function loadScoreboard() {
     document.getElementById("sbBody").innerHTML = ranked.length
       ? ranked.map(r => `
         <tr class="${rankCls[r.rank-1]||""}${r.bot?' ai-row':''}" onclick="openUserBreakdown('${r.uid}')" style="cursor:pointer${r.bot?';background:rgba(66,86,232,.12)':''}">
-          <td>${medalOf(r.rank)}</td>
+          <td>${r.bot ? '🤖' : medalOf(r.rank)}</td>
           <td><div style="display:flex;align-items:center;gap:10px">
             <div class="avatar"${r.bot?' style="background:#4256E8"':''}>${r.bot?'🤖':(r.name||"?")[0].toUpperCase()}</div>
             ${r.name}${r.bot ? ' <span title="AI benchmark — not in the pool" style="font-size:11px;color:var(--accent,#7B86E8)">· benchmark</span>' : (r.paid ? "" : ' <span title="Not paid yet" style="opacity:.85">💸</span>')}
