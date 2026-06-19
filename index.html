@@ -702,6 +702,9 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .md-stat .md-sv{flex:none;min-width:52px;font-weight:800;color:#fff}
 .md-stat .md-sv.right{text-align:right}
 .md-stat .md-sl{flex:1;text-align:center;color:var(--muted);font-size:12px}
+.md-stats-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(66,86,232,.18);border:1px solid rgba(123,134,232,.5);color:#cdd4ff;font-size:11px;font-weight:800;letter-spacing:.03em;padding:3px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;margin-left:8px;flex:none}
+.md-stats-btn:hover{background:rgba(66,86,232,.32)}
+#page-liverace .md-stats-btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.32);color:#fff}
 
 /* ── PROGRESS BAR ── */
 .progress-bar { background: var(--border); border-radius: 4px; height: 4px; overflow: hidden; margin-top: 6px; }
@@ -2123,7 +2126,7 @@ async function renderSchedule(forceReload) {
           <div class="sched-mid">${mid}</div>
           <div class="team-name right"><span>${m.awayTeam}</span> ${flagImg(m.awayTeam)}</div>
         </div>
-        <div class="sched-venue">📍 ${m.venue ? m.venue + " · " : ""}${m.city || ""} ${status}</div>
+        <div class="sched-venue">📍 ${m.venue ? m.venue + " · " : ""}${m.city || ""} ${status} <button class="md-stats-btn sched-stats" onclick="event.stopPropagation();openMatchDetail('${m.id}')">📊 Stats</button></div>
       </div>`;
     }
     html += `</div>`;
@@ -2742,11 +2745,22 @@ function openUserBreakdown(uid){
   ov.style.display = "flex";
 }
 
+let _mdResultsCache = null;
+// Resolve a match result from whatever cache is loaded (calendar / live race / leaderboard).
+function _mdResult(id){
+  const srcs = [];
+  if(typeof _schedResults !== "undefined" && _schedResults) srcs.push(_schedResults);
+  if(typeof _mdResultsCache !== "undefined" && _mdResultsCache) srcs.push(_mdResultsCache);
+  if(typeof _sbResults !== "undefined" && _sbResults) srcs.push(_sbResults);
+  for(const s of srcs){ if(s && s[id] && s[id].homeGoals !== undefined && s[id].homeGoals !== null) return s[id]; }
+  for(const s of srcs){ if(s && s[id]) return s[id]; }
+  return null;
+}
 // Calendar match popup: goals (scorer + minute, by side), match stats (from ESPN), AI prediction.
 function openMatchDetail(matchId){
   const all = (typeof ALL_MATCHES !== "undefined" && ALL_MATCHES && ALL_MATCHES.length) ? ALL_MATCHES : GROUP_MATCHES;
   const m = all.find(x => x.id === matchId); if(!m) return;
-  const r = (typeof _schedResults !== "undefined" && _schedResults) ? _schedResults[matchId] : null;
+  const r = _mdResult(matchId);
   const has = r && r.homeGoals !== undefined && r.homeGoals !== null;
 
   const scoreBig = has
@@ -3055,11 +3069,13 @@ function _renderRaceShell(box){
 
 function _renderLiveCard(results){
   const el = document.getElementById("raceLiveCard"); if(!el) return;
-  const lives = Object.keys(results||{}).filter(id => results[id] && results[id].live).map(id => results[id]);
-  if(!lives.length){ el.innerHTML = ""; el.style.display = "none"; return; }
+  _mdResultsCache = results || {};
+  const liveIds = Object.keys(results||{}).filter(id => results[id] && results[id].live);
+  if(!liveIds.length){ el.innerHTML = ""; el.style.display = "none"; return; }
   el.style.display = "";
   const _goalLine = g => `<div class="lc-goal">\u26bd ${_raceEsc(g.scorer || "")}<span class="lc-gmin">${_raceEsc(g.minute || "")}</span></div>`;
-  el.innerHTML = lives.map(r => {
+  el.innerHTML = liveIds.map(id => {
+    const r = results[id];
     const gs = Array.isArray(r.goals) ? r.goals : [];
     const homeG = gs.filter(g => g.side === "home"), awayG = gs.filter(g => g.side === "away");
     const goalsRow = (homeG.length || awayG.length)
@@ -3069,6 +3085,7 @@ function _renderLiveCard(results){
       <div class="lc-top">
         <div class="lc-match">${flagImg(r.homeTeam)} <span>${_raceEsc(r.homeTeam)}</span> <span class="lc-score">${r.homeGoals}\u2013${r.awayGoals}</span> <span>${_raceEsc(r.awayTeam)}</span> ${flagImg(r.awayTeam)}</div>
         <div class="lc-live"><span class="dot"></span> LIVE${r.liveLabel ? ` <span class="lc-min">${_raceEsc(r.liveLabel)}</span>` : ""}</div>
+        <button class="md-stats-btn" onclick="openMatchDetail('${id}')">📊 Stats</button>
       </div>${goalsRow}
     </div>`;
   }).join("");
@@ -3822,7 +3839,7 @@ initFirebase();
 </script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v2.5";
+  var APP_VERSION = "v2.6";
   var APP_BUILD = "Jun 18, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
