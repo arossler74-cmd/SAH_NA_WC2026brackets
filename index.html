@@ -689,6 +689,19 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
 .modal-box p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
 .modal-actions { display: flex; gap: 10px; justify-content: center; }
+.md-section{padding:14px 18px;border-top:1px solid var(--border,#2A3470)}
+.md-h{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:9px}
+.md-goals{display:flex;justify-content:space-between;gap:18px}
+.md-gcol{flex:1;text-align:left;min-width:0}
+.md-gcol.right{text-align:right}
+.md-goal{font-size:13px;color:#FFE3C2;line-height:1.75}
+.md-goal .md-gmin{color:#FFB020;font-weight:800;margin-left:3px}
+.md-empty{color:var(--muted);font-size:13px}
+.md-stat{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0;font-size:13px;border-top:1px solid rgba(255,255,255,.05)}
+.md-stat:first-of-type{border-top:none}
+.md-stat .md-sv{flex:none;min-width:52px;font-weight:800;color:#fff}
+.md-stat .md-sv.right{text-align:right}
+.md-stat .md-sl{flex:1;text-align:center;color:var(--muted);font-size:12px}
 
 /* ── PROGRESS BAR ── */
 .progress-bar { background: var(--border); border-radius: 4px; height: 4px; overflow: hidden; margin-top: 6px; }
@@ -2103,7 +2116,7 @@ async function renderSchedule(forceReload) {
                     : (has ? `<span class="sched-badge done">Full time</span>`
                     : (started ? `<span class="sched-badge live">Kicked off</span>` : ""));
       html += `
-      <div class="sched-row${has ? " has-score" : ""}">
+      <div class="sched-row${has ? " has-score" : ""}" onclick="openMatchDetail('${m.id}')" style="cursor:pointer">
         <div class="sched-kick">${fmtKick(m.kickoff)}<span class="sched-grp">Group ${m.group}</span></div>
         <div class="sched-match">
           <div class="team-name">${flagImg(m.homeTeam)} <span>${m.homeTeam}</span></div>
@@ -2725,6 +2738,75 @@ function openUserBreakdown(uid){
       <button class="btn btn-ghost-light" onclick="document.getElementById('breakdownOverlay').remove()">\u2715</button>
     </div>
     <div style="overflow:auto">${body}</div>
+  </div>`;
+  ov.style.display = "flex";
+}
+
+// Calendar match popup: goals (scorer + minute, by side), match stats (from ESPN), AI prediction.
+function openMatchDetail(matchId){
+  const all = (typeof ALL_MATCHES !== "undefined" && ALL_MATCHES && ALL_MATCHES.length) ? ALL_MATCHES : GROUP_MATCHES;
+  const m = all.find(x => x.id === matchId); if(!m) return;
+  const r = (typeof _schedResults !== "undefined" && _schedResults) ? _schedResults[matchId] : null;
+  const has = r && r.homeGoals !== undefined && r.homeGoals !== null;
+
+  const scoreBig = has
+    ? `${r.homeGoals} <span style="color:var(--muted)">\u00d7</span> ${r.awayGoals}`
+    : `<span style="font-size:18px;color:var(--muted);font-weight:700">${m.kickoff ? fmtKick(m.kickoff) : "TBD"}</span>`;
+  const statusTag = has
+    ? (r.live ? liveBadge(r) : `<span class="sched-badge done">Full time</span>`)
+    : ((m.kickoff && new Date(m.kickoff).getTime() <= Date.now()) ? `<span class="sched-badge live">Kicked off</span>` : `<span style="color:var(--muted);font-size:12px;font-weight:600">Upcoming</span>`);
+
+  // Goals split by side
+  const goals = (r && Array.isArray(r.goals)) ? r.goals : [];
+  const gLine = g => `<div class="md-goal">\u26bd ${_raceEsc(g.scorer || "")}<span class="md-gmin">${_raceEsc(g.minute || "")}</span></div>`;
+  const homeG = goals.filter(g => g.side === "home"), awayG = goals.filter(g => g.side === "away");
+  let goalsBlock = "";
+  if(homeG.length || awayG.length){
+    goalsBlock = `<div class="md-section"><div class="md-h">Goals</div><div class="md-goals">
+      <div class="md-gcol">${homeG.map(gLine).join("") || '<span class="md-empty">\u2014</span>'}</div>
+      <div class="md-gcol right">${awayG.map(gLine).join("") || '<span class="md-empty">\u2014</span>'}</div>
+    </div></div>`;
+  } else if(has){
+    goalsBlock = `<div class="md-section"><div class="md-h">Goals</div><div class="md-empty" style="text-align:center;padding:4px 0">No scorer details available for this match.</div></div>`;
+  }
+
+  // Match statistics (from ESPN summary, when available)
+  let statsBlock = "";
+  const stats = r && r.stats;
+  if(stats && Array.isArray(stats.home) && (stats.home.length || (stats.away||[]).length)){
+    const map = {}, order = [];
+    (stats.home || []).forEach(s => { if(!(s.label in map)){ map[s.label] = {}; order.push(s.label); } map[s.label].home = s.value; });
+    (stats.away || []).forEach(s => { if(!(s.label in map)){ map[s.label] = {}; order.push(s.label); } map[s.label].away = s.value; });
+    const rows = order.map(lbl => `<div class="md-stat"><span class="md-sv">${_raceEsc(map[lbl].home || "\u2014")}</span><span class="md-sl">${_raceEsc(lbl)}</span><span class="md-sv right">${_raceEsc(map[lbl].away || "\u2014")}</span></div>`).join("");
+    statsBlock = `<div class="md-section"><div class="md-h">Match stats</div>${rows}</div>`;
+  }
+
+  // AI prediction (always available)
+  let aiBlock = "";
+  if(typeof predictScore === "function"){
+    try { const p = predictScore(m.homeTeam, m.awayTeam);
+      if(p) aiBlock = `<div class="md-section"><div class="md-h">\ud83e\udd16 AI prediction</div><div style="text-align:center;font-size:15px;color:#fff;font-weight:700">${_raceEsc(m.homeTeam)} ${p.home} <span style="color:var(--muted)">\u00d7</span> ${p.away} ${_raceEsc(m.awayTeam)}</div></div>`;
+    } catch(e){}
+  }
+
+  const metaTop = [m.group ? ("Group " + m.group) : (m.round || ""), m.kickoff ? (fmtKick(m.kickoff)) : "", (m.venue ? (m.venue + (m.city ? (" \u00b7 " + m.city) : "")) : (m.city || ""))].filter(Boolean).join("  \u00b7  ");
+
+  let ov = document.getElementById("matchDetailOverlay");
+  if(!ov){ ov = document.createElement("div"); ov.id = "matchDetailOverlay"; ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px"; ov.onclick = e => { if(e.target === ov) ov.remove(); }; document.body.appendChild(ov); }
+  ov.innerHTML = `<div style="background:var(--card);border-radius:16px;max-width:560px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#2A3470)" onclick="event.stopPropagation()">
+    <div style="padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border,#2A3470)">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em">${_raceEsc(metaTop)}</div>
+      <button class="btn btn-ghost-light" style="padding:2px 10px" onclick="document.getElementById('matchDetailOverlay').remove()">\u2715</button>
+    </div>
+    <div style="padding:16px 18px 12px;text-align:center">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:15px;color:#fff;font-weight:700">
+        ${flagImg(m.homeTeam)} <span>${_raceEsc(m.homeTeam)}</span>
+        <span style="font-size:26px;font-weight:900;letter-spacing:1px;margin:0 6px">${scoreBig}</span>
+        <span>${_raceEsc(m.awayTeam)}</span> ${flagImg(m.awayTeam)}
+      </div>
+      <div style="margin-top:8px">${statusTag}</div>
+    </div>
+    <div style="overflow:auto">${goalsBlock}${statsBlock}${aiBlock}</div>
   </div>`;
   ov.style.display = "flex";
 }
@@ -3740,7 +3822,7 @@ initFirebase();
 </script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v2.4";
+  var APP_VERSION = "v2.5";
   var APP_BUILD = "Jun 18, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
