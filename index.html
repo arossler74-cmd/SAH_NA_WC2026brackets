@@ -730,6 +730,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     <div class="nav-tab" data-page="schedule" onclick="showPage('schedule')">📅 Calendar</div>
   <div class="nav-tab" data-page="scoreboard" onclick="showPage('scoreboard')">🏆 Leaderboard</div>
   <div class="nav-tab" data-page="phase2forecast" onclick="showPage('phase2forecast')">🔮 Phase 2 Forecast</div>
+  <div class="nav-tab" data-page="liverace" onclick="showPage('liverace')">🏁 Live Race</div>
   <div class="nav-tab admin-only" data-page="admin-results" onclick="showPage('admin-results')" style="display:none">📋 Enter Results</div>
   <div class="nav-tab admin-only" data-page="admin-users" onclick="showPage('admin-users')" style="display:none">👥 Members</div>
   <div class="nav-tab admin-only" data-page="admin-invites" onclick="showPage('admin-invites')" style="display:none">🔗 Invites</div>
@@ -1032,6 +1033,35 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       <button class="btn btn-ghost" onclick="loadPhase2Forecast()">↻ Refresh</button>
     </div>
     <div id="p2fContent"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<div id="page-liverace" class="page">
+  <style>
+    #page-liverace .race-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+    #page-liverace .race-caption{font-weight:800;font-size:16px;color:#fff}
+    #page-liverace .race-time{font-size:12px;color:var(--muted);margin-top:2px}
+    #page-liverace .race-controls{display:flex;gap:8px}
+    #page-liverace .race-progress-wrap{height:6px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:16px}
+    #page-liverace .race-progress{height:100%;width:0;background:var(--orange);transition:width .3s linear}
+    #page-liverace .race-track{position:relative}
+    #page-liverace .race-row{position:absolute;left:0;right:0;height:30px;display:flex;align-items:center;gap:8px;transition:transform .65s cubic-bezier(.4,0,.2,1),opacity .4s}
+    #page-liverace .race-rank{width:22px;text-align:center;font-weight:800;color:var(--muted);font-size:12px;flex:none}
+    #page-liverace .race-name{width:130px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
+    #page-liverace .race-bar{flex:1;height:18px;background:rgba(255,255,255,.06);border-radius:9px;overflow:hidden}
+    #page-liverace .race-bar > i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--accent,#4256E8),#7B86E8);transition:width .65s cubic-bezier(.4,0,.2,1)}
+    #page-liverace .race-pts{width:44px;text-align:right;font-weight:800;color:var(--gold,#E8730C);font-size:14px;flex:none}
+    #page-liverace .race-foot{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+  </style>
+  <div class="main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🏁 Live Race</div>
+        <div class="section-sub">Watch the top 10 shuffle as the live scores land</div>
+      </div>
+      <button class="btn btn-ghost-light" onclick="loadLiveRace()">↻ Rebuild</button>
+    </div>
+    <div id="raceContent"><div class="loader"><div class="spinner"></div></div></div>
   </div>
 </div>
 
@@ -2093,6 +2123,7 @@ function showPage(page) {
   if(page === "schedule") renderSchedule();
   if(page === "scoreboard") loadScoreboard();
   if(page === "phase2forecast") loadPhase2Forecast();
+  if(page === "liverace") loadLiveRace();
   if(page === "admin-users") loadUsers();
   if(page === "admin-results") { buildResultGroupTabs(); loadAdminResults(); loadPointsConfig(); }
   if(page === "admin-invites") loadInviteLink();
@@ -2464,10 +2495,10 @@ function openEmailLeaderboard(){
     ov.id = "emailOverlay";
     ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px";
     ov.innerHTML = `<div style="background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#2A3470)">
-      <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)"><strong style="font-size:16px;color:#fff">📧 Email-ready leaderboard</strong><button class="btn btn-ghost" onclick="document.getElementById('emailOverlay').style.display='none'">✕</button></div>
+      <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)"><strong style="font-size:16px;color:#fff">📧 Email-ready leaderboard</strong><button class="btn btn-ghost-light" onclick="document.getElementById('emailOverlay').style.display='none'">✕</button></div>
       <div style="padding:12px 18px;font-size:12px;color:var(--muted)">Click <strong>Copy for email</strong>, then paste (Ctrl/Cmd+V) into Gmail or Outlook — the formatting is preserved.</div>
       <iframe id="emailFrame" style="border:0;flex:1;min-height:430px;background:#EEF1FB;border-radius:10px;margin:0 16px"></iframe>
-      <div style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid var(--border,#2A3470)"><button class="btn btn-ghost" onclick="openEmailTab()">Open in new tab</button><button class="btn btn-ghost" onclick="downloadLeaderboardImage('png')">🖼 PNG</button><button class="btn btn-ghost" onclick="downloadLeaderboardImage('jpg')">JPG</button><button class="btn btn-gold" onclick="copyEmailLeaderboard()">📋 Copy for email</button></div>
+      <div style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid var(--border,#2A3470)"><button class="btn btn-ghost-light" onclick="openEmailTab()">Open in new tab</button><button class="btn btn-ghost-light" onclick="downloadLeaderboardImage('png')">🖼 PNG</button><button class="btn btn-ghost-light" onclick="downloadLeaderboardImage('jpg')">JPG</button><button class="btn btn-gold" onclick="copyEmailLeaderboard()">📋 Copy for email</button></div>
     </div>`;
     document.body.appendChild(ov);
   }
@@ -2619,43 +2650,59 @@ function openUserBreakdown(uid){
   const name = _sbNames[uid] || "Player";
   const bets = _sbBetsByUser[uid] || {};
   const results = _sbResults || {};
-  const order = (typeof ALL_MATCHES !== "undefined" && ALL_MATCHES && ALL_MATCHES.length) ? ALL_MATCHES : GROUP_MATCHES;
-  let total = 0, perfect = 0, played = 0;
+  const order = ((typeof ALL_MATCHES !== "undefined" && ALL_MATCHES && ALL_MATCHES.length) ? ALL_MATCHES : GROUP_MATCHES)
+    .slice().sort((a,b) => {
+      const ka = a.kickoff ? new Date(a.kickoff).getTime() : 8e15;
+      const kb = b.kickoff ? new Date(b.kickoff).getTime() : 8e15;
+      return (ka - kb) || ((a.matchNum||0) - (b.matchNum||0));
+    });
+  let total = 0, perfect = 0, played = 0, shown = 0;
   const rowsHtml = order.map(m => {
     const r = results[m.id];
-    if(!r || r.homeGoals === undefined) return "";
-    played++;
+    const has = r && r.homeGoals !== undefined;
     const bet = bets[m.id];
-    let pickCell, ptsCell;
-    if(bet){
-      const pts = calcPoints(bet, r); total += pts;
-      const b = getResultBadge(pts);
-      if(pts >= pointsConfig.perfect) perfect++;
-      pickCell = `<strong>${bet.homeGoals} \u00d7 ${bet.awayGoals}</strong>`;
-      ptsCell = `<span class="result-badge badge-${b.cls}" style="font-size:10px">${b.icon}</span> <strong>+${pts}</strong>`;
+    if(!has && !bet) return "";   // show finished games and any game they predicted
+    shown++;
+    const gnum = m.matchNum ? ("#"+m.matchNum) : "";
+    const gdate = m.kickoff ? new Date(m.kickoff).toLocaleDateString([], {month:"short", day:"numeric"}) : (m.date || "");
+    const meta = [gnum, gdate].filter(Boolean).join(" \u00b7 ");
+    const pickCell = bet ? `<strong>${bet.homeGoals} \u00d7 ${bet.awayGoals}</strong>` : `<span style="color:var(--muted)">\u2014</span>`;
+    let resultCell, ptsCell;
+    if(has){
+      played++;
+      const liveTag = r.live ? ` <span class="live-badge"><span class="dot"></span>LIVE${r.liveLabel ? " "+r.liveLabel : ""}</span>` : "";
+      resultCell = `<strong>${r.homeGoals} \u00d7 ${r.awayGoals}</strong>${liveTag}`;
+      if(bet){
+        const pts = calcPoints(bet, r); total += pts;
+        const b = getResultBadge(pts);
+        if(pts >= pointsConfig.perfect) perfect++;
+        ptsCell = `<span class="result-badge badge-${b.cls}" style="font-size:10px">${b.icon}</span> <strong>+${pts}</strong>`;
+      } else { ptsCell = `<span style="color:var(--muted)">\u2014</span>`; }
     } else {
-      pickCell = `<span style="color:var(--muted)">no pick</span>`;
+      resultCell = `<span style="color:var(--muted);font-size:12px;font-weight:600">${m.kickoff ? fmtKick(m.kickoff) : "upcoming"}</span>`;
       ptsCell = `<span style="color:var(--muted)">\u2014</span>`;
     }
-    const liveTag = r.live ? ` <span class="live-badge"><span class="dot"></span>LIVE${r.liveLabel ? " "+r.liveLabel : ""}</span>` : "";
     return `<tr style="border-top:1px solid var(--border,#2A3470)">
-      <td style="padding:9px 12px;font-size:13px">${flagImg(m.homeTeam)} ${m.homeTeam} <span style="color:var(--muted)">\u00d7</span> ${m.awayTeam} ${flagImg(m.awayTeam)}${liveTag}</td>
+      <td style="padding:9px 12px;font-size:13px">
+        <div style="color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.03em;margin-bottom:3px">${meta}</div>
+        ${flagImg(m.homeTeam)} ${m.homeTeam} <span style="color:var(--muted)">\u00d7</span> ${m.awayTeam} ${flagImg(m.awayTeam)}
+      </td>
       <td style="padding:9px 12px;text-align:center;font-size:13px">${pickCell}</td>
-      <td style="padding:9px 12px;text-align:center;font-weight:800">${r.homeGoals} \u00d7 ${r.awayGoals}</td>
+      <td style="padding:9px 12px;text-align:center;font-weight:800">${resultCell}</td>
       <td style="padding:9px 12px;text-align:right;white-space:nowrap;font-size:13px">${ptsCell}</td>
     </tr>`;
   }).join("");
-  const body = played ? `<table style="width:100%;border-collapse:collapse">
+  const body = shown ? `<table style="width:100%;border-collapse:collapse">
       <tr style="text-align:left;color:var(--muted);font-size:11px">
         <th style="padding:9px 12px">MATCH</th><th style="padding:9px 12px;text-align:center">PICK</th><th style="padding:9px 12px;text-align:center">RESULT</th><th style="padding:9px 12px;text-align:right">PTS</th>
       </tr>${rowsHtml}</table>`
-    : `<div style="padding:28px;text-align:center;color:var(--muted)">No finished matches yet for this player.</div>`;
+    : `<div style="padding:28px;text-align:center;color:var(--muted)">No predictions yet for this player.</div>`;
   let ov = document.getElementById("breakdownOverlay");
   if(!ov){ ov = document.createElement("div"); ov.id = "breakdownOverlay"; ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px"; document.body.appendChild(ov); }
   ov.innerHTML = `<div style="background:var(--card);border-radius:16px;max-width:660px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#2A3470)">
     <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)">
       <div><strong style="font-size:17px;color:#fff">${name}</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">${total} pts \u00b7 ${perfect} perfect \u00b7 ${played} played</div></div>
-      <button class="btn btn-ghost" onclick="document.getElementById('breakdownOverlay').remove()">\u2715</button>
+      <button class="btn btn-ghost-light" onclick="document.getElementById('breakdownOverlay').remove()">\u2715</button>
     </div>
     <div style="overflow:auto">${body}</div>
   </div>`;
@@ -2790,6 +2837,135 @@ async function loadScoreboard() {
     document.getElementById("sbBody").innerHTML = `<tr><td colspan="5" style="color:var(--red);text-align:center;padding:20px">Error: ${e.message}</td></tr>`;
   }
 }
+
+// ═══════════════════════════════════════════════════════════
+//  LIVE RACE — animated bar-chart-race of the top-10. Reconstructs the
+//  leaderboard at every logged score change (results_history) and replays it
+//  from yesterday → now, goal by goal. Autoplays when the tab opens.
+// ═══════════════════════════════════════════════════════════
+let _raceTimer = null, _raceFrames = [], _raceIdx = 0, _raceEverTop = [];
+const _RACE_ROWH = 34, _RACE_TOPN = 10, _RACE_SPEED = 750;
+
+async function loadLiveRace(){
+  const box = document.getElementById("raceContent");
+  if(!box) return;
+  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; }
+  box.innerHTML = `<div class="loader"><div class="spinner"></div>Building the race…</div>`;
+  const esc = s => String(s||"").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  let betsSnap, usersSnap, histSnap;
+  try {
+    [betsSnap, usersSnap] = await Promise.all([ col("bets").get(), col("users").get() ]);
+    const since = new Date(); since.setHours(0,0,0,0); since.setDate(since.getDate()-1);
+    try {
+      histSnap = await col("results_history").where("ts", ">=", firebase.firestore.Timestamp.fromDate(since)).orderBy("ts").get();
+    } catch(e){
+      histSnap = await col("results_history").orderBy("ts").get();
+    }
+  } catch(e){ box.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${esc(e.message)}</div>`; return; }
+
+  const names = {}, adminSet = new Set();
+  usersSnap.forEach(d => { const u=d.data(); if(u.role==="admin"){ adminSet.add(d.id); return; } if(u.role==="bot"||u.bot) return; names[d.id]=u.name||u.email; });
+  const betsByUser = {};
+  betsSnap.forEach(doc => { const b=doc.data(); if(!b.userId || adminSet.has(b.userId) || !names[b.userId]) return; (betsByUser[b.userId] || (betsByUser[b.userId]={}))[b.matchId] = b; });
+
+  const events = [];
+  histSnap.forEach(d => { const e=d.data(); if(!e.matchId || e.homeGoals===undefined) return; events.push(e); });
+
+  if(events.length < 2){
+    box.innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted)">🏁 The race fills up as live scores come in — check back during the games!<br><span style="font-size:12px;opacity:.8">(needs the history log deployed and a couple of score updates)</span></div>`;
+    return;
+  }
+
+  const liveScores = {};
+  const frames = [];
+  const computeStandings = () => {
+    const totals = [];
+    for(const uid in names){
+      const ub = betsByUser[uid] || {};
+      let pts = 0;
+      for(const mid in liveScores){ const bet = ub[mid]; if(bet) pts += calcPoints(bet, liveScores[mid]); }
+      totals.push({ uid, name: names[uid], pts });
+    }
+    totals.sort((a,b)=> b.pts-a.pts || a.name.localeCompare(b.name));
+    return totals;
+  };
+  events.forEach(e => {
+    liveScores[e.matchId] = { homeGoals: e.homeGoals, awayGoals: e.awayGoals };
+    frames.push({
+      ts: (e.ts && e.ts.toDate) ? e.ts.toDate() : null,
+      caption: `${e.homeTeam||"?"} ${e.homeGoals}–${e.awayGoals} ${e.awayTeam||"?"}${e.live?" · LIVE":""}`,
+      standings: computeStandings()
+    });
+  });
+
+  const everTop = new Set();
+  frames.forEach(f => f.standings.slice(0,_RACE_TOPN).forEach(s => everTop.add(s.uid)));
+  _raceEverTop = [...everTop];
+  _raceFrames = frames;
+  _raceIdx = 0;
+
+  const trackRows = _raceEverTop.map(uid => `
+    <div class="race-row" id="racerow-${uid}" style="opacity:0">
+      <span class="race-rank">–</span>
+      <span class="race-name">${esc(names[uid])}</span>
+      <div class="race-bar"><i></i></div>
+      <span class="race-pts">0</span>
+    </div>`).join("");
+
+  box.innerHTML = `
+    <div class="race-head">
+      <div><div id="raceCaption" class="race-caption">—</div><div id="raceTime" class="race-time"></div></div>
+      <div class="race-controls">
+        <button class="btn btn-ghost-light" id="racePlayBtn" onclick="playRace()">⏸ Pause</button>
+        <button class="btn btn-ghost-light" onclick="restartRace()">↻ Replay</button>
+      </div>
+    </div>
+    <div class="race-progress-wrap"><div id="raceProgress" class="race-progress"></div></div>
+    <div class="race-track" style="height:${_RACE_TOPN*_RACE_ROWH}px">${trackRows}</div>
+    <div class="race-foot">Top 10 · ${frames.length} moments · replays yesterday → now as each score landed</div>`;
+
+  renderRaceFrame(0);
+  playRace();
+}
+
+function renderRaceFrame(idx){
+  const f = _raceFrames[idx]; if(!f) return;
+  const top = f.standings.slice(0, _RACE_TOPN);
+  const maxPts = Math.max(1, top.length ? top[0].pts : 1);
+  const rankByUid = {}; top.forEach((s,i)=> rankByUid[s.uid]=i);
+  const ptsByUid = {}; f.standings.forEach(s => ptsByUid[s.uid]=s.pts);
+  _raceEverTop.forEach(uid => {
+    const row = document.getElementById("racerow-"+uid); if(!row) return;
+    const rk = rankByUid[uid];
+    if(rk === undefined){ row.style.opacity = "0"; row.style.transform = `translateY(${_RACE_TOPN*_RACE_ROWH}px)`; return; }
+    row.style.opacity = "1";
+    row.style.transform = `translateY(${rk*_RACE_ROWH}px)`;
+    const pts = ptsByUid[uid] || 0;
+    row.querySelector(".race-bar > i").style.width = Math.round(pts/maxPts*100) + "%";
+    row.querySelector(".race-pts").textContent = pts;
+    row.querySelector(".race-rank").textContent = (rk+1);
+  });
+  const cap = document.getElementById("raceCaption"); if(cap) cap.textContent = f.caption;
+  const tm = document.getElementById("raceTime"); if(tm) tm.textContent = f.ts ? f.ts.toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) : "";
+  const pr = document.getElementById("raceProgress"); if(pr) pr.style.width = Math.round((idx+1)/_raceFrames.length*100) + "%";
+}
+
+function playRace(){
+  const btn = document.getElementById("racePlayBtn");
+  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; if(btn) btn.textContent = "▶ Play"; return; }
+  if(_raceIdx >= _raceFrames.length - 1) _raceIdx = 0;
+  if(btn) btn.textContent = "⏸ Pause";
+  renderRaceFrame(_raceIdx);
+  _raceTimer = setInterval(() => {
+    const pg = document.getElementById("page-liverace");
+    if(!pg || !pg.classList.contains("active")){ clearInterval(_raceTimer); _raceTimer = null; return; }
+    _raceIdx++;
+    if(_raceIdx >= _raceFrames.length){ clearInterval(_raceTimer); _raceTimer = null; _raceIdx = _raceFrames.length - 1; if(btn) btn.textContent = "↻ Replay"; return; }
+    renderRaceFrame(_raceIdx);
+  }, _RACE_SPEED);
+}
+
+function restartRace(){ if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; } _raceIdx = 0; renderRaceFrame(0); playRace(); }
 
 // ═══════════════════════════════════════════════════════════
 //  PHASE 2 FORECAST — projected group standings from the consensus
