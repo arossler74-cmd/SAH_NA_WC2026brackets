@@ -1052,6 +1052,17 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     #page-liverace .race-bar > i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--accent,#4256E8),#7B86E8);transition:width .65s cubic-bezier(.4,0,.2,1)}
     #page-liverace .race-pts{width:44px;text-align:right;font-weight:800;color:var(--gold,#E8730C);font-size:14px;flex:none}
     #page-liverace .race-foot{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+    #page-liverace .race-row.bot .race-name{color:var(--gold,#E8730C)}
+    #page-liverace .race-row.bot .race-rank{color:var(--gold,#E8730C)}
+    #page-liverace .race-row.bot .race-bar > i{background:linear-gradient(90deg,#E8730C,#FFB020)}
+    #page-liverace{position:relative}
+    #page-liverace .race-livecard{display:flex;align-items:center;gap:10px;background:rgba(225,29,72,.12);border:1px solid rgba(225,29,72,.45);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:14px}
+    #page-liverace .race-livecard .dot{width:9px;height:9px;border-radius:50%;background:#E11D48;flex:none;animation:racepulse 1.2s infinite}
+    #page-liverace .race-livecard .lc-score{font-weight:800;color:#fff;margin:0 4px}
+    #page-liverace .race-livecard .lc-min{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+    @keyframes racepulse{0%,100%{opacity:1}50%{opacity:.25}}
+    #page-liverace .race-goal{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;background:linear-gradient(135deg,#E8730C,#FFB020);color:#fff;font-weight:900;font-size:24px;padding:16px 28px;border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.45);z-index:60;text-align:center;transition:transform .35s cubic-bezier(.2,1.3,.4,1),opacity .35s}
+    #page-liverace .race-goal.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
   </style>
   <div class="main">
     <div class="section-header">
@@ -1059,7 +1070,6 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
         <div class="section-title">🏁 Live Race</div>
         <div class="section-sub">Watch the top 10 shuffle as the live scores land</div>
       </div>
-      <button class="btn btn-ghost-light" onclick="loadLiveRace()">↻ Rebuild</button>
     </div>
     <div id="raceContent"><div class="loader"><div class="spinner"></div></div></div>
   </div>
@@ -2111,6 +2121,7 @@ function showPage(page) {
   if(adminPages.includes(page) && !isAdmin) { page = "bets"; }
   // The admin doesn't place bets — send them to their control panel instead
   if(page === "bets" && isAdmin) { page = "admin-results"; }
+  if(page !== "liverace"){ if(typeof _raceUnsub !== "undefined" && _raceUnsub){ _raceUnsub(); _raceUnsub = null; } if(typeof _raceTimer !== "undefined" && _raceTimer){ clearInterval(_raceTimer); _raceTimer = null; } }
 
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
@@ -2839,80 +2850,98 @@ async function loadScoreboard() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  LIVE RACE — animated bar-chart-race of the top-10. Reconstructs the
-//  leaderboard at every logged score change (results_history) and replays it
-//  from yesterday → now, goal by goal. Autoplays when the tab opens.
+//  LIVE RACE — opens with a one-time "yesterday → now" replay (goal-by-goal from
+//  the stored history). After that it does NOT poll; a real-time listener reacts
+//  only when a goal is scored: it flashes a GOAL! animation, refreshes the live-
+//  match card, and nudges the race by that single goal's impact. The 🤖 AI
+//  Prediction races too. Goal timeline is persisted in results_history.
 // ═══════════════════════════════════════════════════════════
-let _raceTimer = null, _raceFrames = [], _raceIdx = 0, _raceEverTop = [];
-const _RACE_ROWH = 34, _RACE_TOPN = 10, _RACE_SPEED = 750;
+let _raceTimer = null, _raceFrames = [], _raceIdx = 0, _raceEverTop = [], _racePlaying = false, _raceCache = null;
+let _raceUnsub = null, _raceNames = {}, _raceBets = {}, _raceLiveScores = {}, _raceKnown = {}, _raceGoalT = null;
+const _RACE_ROWH = 34, _RACE_TOPN = 10, _RACE_SPEED = 750, _RACE_AI = "__ai_prediction__";
+const _raceEsc = s => String(s||"").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function _raceStandings(scores){
+  const tot = [];
+  for(const uid in _raceNames){ const ub = _raceBets[uid] || {}; let pts=0; for(const mid in scores){ const bet=ub[mid]; if(bet) pts += calcPoints(bet, scores[mid]); } tot.push({ uid, name:_raceNames[uid], pts, bot: uid===_RACE_AI }); }
+  tot.sort((a,b) => b.pts-a.pts || a.name.localeCompare(b.name));
+  return tot;
+}
+
+async function _buildRaceData(useCache){
+  const ws = new Date(); ws.setHours(0,0,0,0); ws.setDate(ws.getDate()-1); const windowStart = ws.getTime(); // start of yesterday (local)
+  let names, bets;
+  if(useCache && _raceCache){ names = Object.assign({}, _raceCache.names); bets = _raceCache.bets; }
+  else {
+    const [betsSnap, usersSnap] = await Promise.all([ col("bets").get(), col("users").get() ]);
+    names = {}; const adminSet = new Set();
+    usersSnap.forEach(d => { const u=d.data(); if(u.role==="admin"){ adminSet.add(d.id); return; } if(u.role==="bot"||u.bot) return; names[d.id]=u.name||u.email; });
+    bets = {};
+    betsSnap.forEach(doc => { const b=doc.data(); if(!b.userId || adminSet.has(b.userId) || !names[b.userId]) return; (bets[b.userId] || (bets[b.userId]={}))[b.matchId] = b; });
+    names[_RACE_AI] = "🤖 AI Prediction";
+    const ai = {}; GROUP_MATCHES.forEach(m => { const p = predictScore(m.homeTeam, m.awayTeam); ai[m.id] = { homeGoals:p.home, awayGoals:p.away }; });
+    bets[_RACE_AI] = ai;
+    _raceCache = { names: Object.assign({}, names), bets };
+  }
+  _raceNames = names; _raceBets = bets;
+
+  const resSnap = await col("results").get();
+  const results = {}, updAt = {};
+  resSnap.forEach(d => { const r=d.data(); if(r.homeGoals===undefined) return; results[d.id]=r; updAt[d.id] = (r.updatedAt && r.updatedAt.toMillis) ? r.updatedAt.toMillis() : 0; });
+
+  let hist = [];
+  try {
+    const hs = await col("results_history").where("ts", ">=", firebase.firestore.Timestamp.fromMillis(windowStart)).orderBy("ts").get();
+    hs.forEach(d => { const e=d.data(); if(e && e.matchId && e.homeGoals!==undefined && e.ts && e.ts.toMillis) hist.push(e); });
+  } catch(e){ /* history optional */ }
+
+  const baseScores = {};
+  Object.keys(results).forEach(id => { if(updAt[id] < windowStart) baseScores[id] = { homeGoals:results[id].homeGoals, awayGoals:results[id].awayGoals }; });
+
+  const points = [], histMatch = {};
+  hist.forEach(e => { points.push({ ts:e.ts.toMillis(), matchId:e.matchId, hg:e.homeGoals, ag:e.awayGoals, hp:e.homeTeam, ap:e.awayTeam, live:!!e.live }); histMatch[e.matchId]=1; });
+  Object.keys(results).forEach(id => { if(updAt[id] >= windowStart && !histMatch[id]){ const r=results[id]; points.push({ ts:updAt[id], matchId:id, hg:r.homeGoals, ag:r.awayGoals, hp:r.homeTeam, ap:r.awayTeam, live:!!r.live }); } });
+  points.sort((a,b) => a.ts - b.ts);
+
+  const frames = [];
+  const live = Object.assign({}, baseScores);
+  frames.push({ ts: windowStart, caption: "📸 Yesterday", standings: _raceStandings(live) });
+  points.forEach(p => { live[p.matchId] = { homeGoals:p.hg, awayGoals:p.ag }; frames.push({ ts:p.ts, caption: (p.hp||"?")+" "+p.hg+"–"+p.ag+" "+(p.ap||"?")+(p.live?" · 🔴 LIVE":""), standings: _raceStandings(live) }); });
+  const finalLive = {}; Object.keys(results).forEach(id => finalLive[id] = { homeGoals:results[id].homeGoals, awayGoals:results[id].awayGoals });
+  frames.push({ ts: Date.now(), caption: "🏁 Now", standings: _raceStandings(finalLive) });
+
+  _raceLiveScores = finalLive;
+  _raceKnown = {}; Object.keys(results).forEach(id => { _raceKnown[id] = (results[id].homeGoals||0)+(results[id].awayGoals||0); });
+  return { frames, results };
+}
 
 async function loadLiveRace(){
-  const box = document.getElementById("raceContent");
-  if(!box) return;
+  const box = document.getElementById("raceContent"); if(!box) return;
   if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; }
+  if(_raceUnsub){ _raceUnsub(); _raceUnsub = null; }
+  _raceCache = null;
   box.innerHTML = `<div class="loader"><div class="spinner"></div>Building the race…</div>`;
-  const esc = s => String(s||"").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  let betsSnap, usersSnap, histSnap;
-  try {
-    [betsSnap, usersSnap] = await Promise.all([ col("bets").get(), col("users").get() ]);
-    const since = new Date(); since.setHours(0,0,0,0); since.setDate(since.getDate()-1);
-    try {
-      histSnap = await col("results_history").where("ts", ">=", firebase.firestore.Timestamp.fromDate(since)).orderBy("ts").get();
-    } catch(e){
-      histSnap = await col("results_history").orderBy("ts").get();
-    }
-  } catch(e){ box.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${esc(e.message)}</div>`; return; }
+  let data;
+  try { data = await _buildRaceData(false); }
+  catch(e){ box.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${_raceEsc(e.message)}</div>`; return; }
+  _raceFrames = data.frames; _raceIdx = 0;
+  const everTop = new Set(); _raceFrames.forEach(f => f.standings.slice(0,_RACE_TOPN).forEach(s => everTop.add(s.uid))); _raceEverTop = [...everTop];
+  _renderRaceShell(box);
+  _renderLiveCard(data.results);
+  renderRaceFrame(0);
+  playRace();
+  _watchRace();
+}
 
-  const names = {}, adminSet = new Set();
-  usersSnap.forEach(d => { const u=d.data(); if(u.role==="admin"){ adminSet.add(d.id); return; } if(u.role==="bot"||u.bot) return; names[d.id]=u.name||u.email; });
-  const betsByUser = {};
-  betsSnap.forEach(doc => { const b=doc.data(); if(!b.userId || adminSet.has(b.userId) || !names[b.userId]) return; (betsByUser[b.userId] || (betsByUser[b.userId]={}))[b.matchId] = b; });
-
-  const events = [];
-  histSnap.forEach(d => { const e=d.data(); if(!e.matchId || e.homeGoals===undefined) return; events.push(e); });
-
-  if(events.length < 2){
-    box.innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted)">🏁 The race fills up as live scores come in — check back during the games!<br><span style="font-size:12px;opacity:.8">(needs the history log deployed and a couple of score updates)</span></div>`;
-    return;
-  }
-
-  const liveScores = {};
-  const frames = [];
-  const computeStandings = () => {
-    const totals = [];
-    for(const uid in names){
-      const ub = betsByUser[uid] || {};
-      let pts = 0;
-      for(const mid in liveScores){ const bet = ub[mid]; if(bet) pts += calcPoints(bet, liveScores[mid]); }
-      totals.push({ uid, name: names[uid], pts });
-    }
-    totals.sort((a,b)=> b.pts-a.pts || a.name.localeCompare(b.name));
-    return totals;
-  };
-  events.forEach(e => {
-    liveScores[e.matchId] = { homeGoals: e.homeGoals, awayGoals: e.awayGoals };
-    frames.push({
-      ts: (e.ts && e.ts.toDate) ? e.ts.toDate() : null,
-      caption: `${e.homeTeam||"?"} ${e.homeGoals}–${e.awayGoals} ${e.awayTeam||"?"}${e.live?" · LIVE":""}`,
-      standings: computeStandings()
-    });
-  });
-
-  const everTop = new Set();
-  frames.forEach(f => f.standings.slice(0,_RACE_TOPN).forEach(s => everTop.add(s.uid)));
-  _raceEverTop = [...everTop];
-  _raceFrames = frames;
-  _raceIdx = 0;
-
-  const trackRows = _raceEverTop.map(uid => `
-    <div class="race-row" id="racerow-${uid}" style="opacity:0">
-      <span class="race-rank">–</span>
-      <span class="race-name">${esc(names[uid])}</span>
-      <div class="race-bar"><i></i></div>
-      <span class="race-pts">0</span>
+function _renderRaceShell(box){
+  const rows = _raceEverTop.map(uid => `
+    <div class="race-row${uid===_RACE_AI?' bot':''}" id="racerow-${uid}" style="opacity:0">
+      <span class="race-rank">–</span><span class="race-name">${_raceEsc(_raceNames[uid])}</span>
+      <div class="race-bar"><i></i></div><span class="race-pts">0</span>
     </div>`).join("");
-
   box.innerHTML = `
+    <div id="raceGoal" class="race-goal"></div>
+    <div id="raceLiveCard"></div>
     <div class="race-head">
       <div><div id="raceCaption" class="race-caption">—</div><div id="raceTime" class="race-time"></div></div>
       <div class="race-controls">
@@ -2921,11 +2950,18 @@ async function loadLiveRace(){
       </div>
     </div>
     <div class="race-progress-wrap"><div id="raceProgress" class="race-progress"></div></div>
-    <div class="race-track" style="height:${_RACE_TOPN*_RACE_ROWH}px">${trackRows}</div>
-    <div class="race-foot">Top 10 · ${frames.length} moments · replays yesterday → now as each score landed</div>`;
+    <div class="race-track" style="height:${_RACE_TOPN*_RACE_ROWH}px">${rows}</div>
+    <div class="race-foot">Top 10 + 🤖 · yesterday → now · reacts to live goals</div>`;
+}
 
-  renderRaceFrame(0);
-  playRace();
+function _renderLiveCard(results){
+  const el = document.getElementById("raceLiveCard"); if(!el) return;
+  const lives = Object.keys(results||{}).filter(id => results[id] && results[id].live).map(id => results[id]);
+  if(!lives.length){ el.innerHTML = ""; el.style.display = "none"; return; }
+  el.style.display = "";
+  el.innerHTML = lives.map(r => `<div class="race-livecard"><span class="dot"></span>
+    <span>${flagImg(r.homeTeam)} ${_raceEsc(r.homeTeam)} <span class="lc-score">${r.homeGoals}–${r.awayGoals}</span> ${_raceEsc(r.awayTeam)} ${flagImg(r.awayTeam)}</span>
+    <span class="lc-min">${r.liveLabel ? _raceEsc(r.liveLabel) : "LIVE"}</span></div>`).join("");
 }
 
 function renderRaceFrame(idx){
@@ -2946,26 +2982,66 @@ function renderRaceFrame(idx){
     row.querySelector(".race-rank").textContent = (rk+1);
   });
   const cap = document.getElementById("raceCaption"); if(cap) cap.textContent = f.caption;
-  const tm = document.getElementById("raceTime"); if(tm) tm.textContent = f.ts ? f.ts.toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) : "";
+  const tm = document.getElementById("raceTime"); if(tm) tm.textContent = f.ts ? new Date(f.ts).toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) : "";
   const pr = document.getElementById("raceProgress"); if(pr) pr.style.width = Math.round((idx+1)/_raceFrames.length*100) + "%";
 }
 
 function playRace(){
   const btn = document.getElementById("racePlayBtn");
-  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; if(btn) btn.textContent = "▶ Play"; return; }
+  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; _racePlaying = false; if(btn) btn.textContent = "▶ Play"; return; }
   if(_raceIdx >= _raceFrames.length - 1) _raceIdx = 0;
-  if(btn) btn.textContent = "⏸ Pause";
+  _racePlaying = true; if(btn) btn.textContent = "⏸ Pause";
   renderRaceFrame(_raceIdx);
   _raceTimer = setInterval(() => {
     const pg = document.getElementById("page-liverace");
-    if(!pg || !pg.classList.contains("active")){ clearInterval(_raceTimer); _raceTimer = null; return; }
+    if(!pg || !pg.classList.contains("active")){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; return; }
     _raceIdx++;
-    if(_raceIdx >= _raceFrames.length){ clearInterval(_raceTimer); _raceTimer = null; _raceIdx = _raceFrames.length - 1; if(btn) btn.textContent = "↻ Replay"; return; }
+    if(_raceIdx >= _raceFrames.length){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; _raceIdx=_raceFrames.length-1; if(btn) btn.textContent="▶ Play"; return; }
     renderRaceFrame(_raceIdx);
   }, _RACE_SPEED);
 }
 
-function restartRace(){ if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; } _raceIdx = 0; renderRaceFrame(0); playRace(); }
+function restartRace(){ if(_raceTimer){ clearInterval(_raceTimer); _raceTimer=null; } _raceIdx = 0; renderRaceFrame(0); playRace(); }
+
+function _showGoal(r){
+  const g = document.getElementById("raceGoal"); if(!g) return;
+  g.innerHTML = `⚽ GOAL!<div style="font-size:13px;font-weight:700;margin-top:5px">${_raceEsc(r.homeTeam)} ${r.homeGoals}–${r.awayGoals} ${_raceEsc(r.awayTeam)}</div>`;
+  g.classList.add("show");
+  clearTimeout(_raceGoalT); _raceGoalT = setTimeout(() => g.classList.remove("show"), 3500);
+}
+
+// Real-time: open animates once, then we only react to goals (no polling).
+function _watchRace(){
+  if(_raceUnsub){ _raceUnsub(); _raceUnsub = null; }
+  _raceUnsub = col("results").onSnapshot(snap => {
+    const pg = document.getElementById("page-liverace");
+    if(!pg || !pg.classList.contains("active")){ if(_raceUnsub){ _raceUnsub(); _raceUnsub=null; } return; }
+    const results = {}; snap.forEach(d => { const r=d.data(); if(r.homeGoals!==undefined) results[d.id]=r; });
+    _renderLiveCard(results);
+    let goalMatch = null;
+    snap.docChanges().forEach(ch => {
+      if(ch.type === "removed") return;
+      const r = ch.doc.data(); if(r.homeGoals===undefined) return;
+      const id = ch.doc.id, total = (r.homeGoals||0)+(r.awayGoals||0), prev = _raceKnown[id];
+      _raceLiveScores[id] = { homeGoals:r.homeGoals, awayGoals:r.awayGoals };
+      if(prev !== undefined && total > prev) goalMatch = r;
+      _raceKnown[id] = total;
+    });
+    if(goalMatch){
+      _showGoal(goalMatch);
+      _raceFrames.push({ ts: Date.now(), caption: `⚽ ${goalMatch.homeTeam} ${goalMatch.homeGoals}–${goalMatch.awayGoals} ${goalMatch.awayTeam}`, standings: _raceStandings(_raceLiveScores) });
+      const newTop = new Set(); _raceFrames.forEach(fr => fr.standings.slice(0,_RACE_TOPN).forEach(s => newTop.add(s.uid)));
+      const arr = [...newTop];
+      if(arr.length !== _raceEverTop.length || arr.some(u => !_raceEverTop.includes(u))){ _raceEverTop = arr; _renderRaceShell(document.getElementById("raceContent")); _renderLiveCard(results); }
+      if(_raceTimer){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; const b=document.getElementById("racePlayBtn"); if(b) b.textContent="▶ Play"; }
+      _raceIdx = _raceFrames.length - 1;
+      renderRaceFrame(_raceIdx);   // nudge the race by just this goal's impact
+    } else if(!_racePlaying && _raceIdx >= _raceFrames.length - 1){
+      _raceFrames[_raceFrames.length-1] = { ts: Date.now(), caption: "🏁 Now", standings: _raceStandings(_raceLiveScores) };
+      renderRaceFrame(_raceFrames.length-1);
+    }
+  }, err => { /* listener error: ignore */ });
+}
 
 // ═══════════════════════════════════════════════════════════
 //  PHASE 2 FORECAST — projected group standings from the consensus
