@@ -1061,7 +1061,8 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     #page-liverace .race-progress-wrap{height:6px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:16px}
     #page-liverace .race-progress{height:100%;width:0;background:var(--orange);transition:width .3s linear}
     #page-liverace .race-track{position:relative}
-    #page-liverace .race-row{position:absolute;left:0;right:0;height:30px;display:flex;align-items:center;gap:8px;transition:transform .65s cubic-bezier(.4,0,.2,1),opacity .4s}
+    #page-liverace .race-row{position:absolute;left:0;right:0;height:30px;display:flex;align-items:center;gap:8px;transition:transform .65s cubic-bezier(.4,0,.2,1),opacity .4s;z-index:1}
+    #page-liverace .race-row:hover,#page-liverace .race-row:focus-within{z-index:300}
     #page-liverace .race-rank{width:26px;text-align:center;font-weight:800;color:var(--muted);font-size:14px;flex:none}
     #page-liverace .race-name{width:130px;font-size:13px;font-weight:700;color:#fff;flex:none;position:relative;cursor:help}
     #page-liverace .race-name .rn-text{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
@@ -3945,7 +3946,7 @@ initFirebase();
 </script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v3.1";
+  var APP_VERSION = "v3.2";
   var APP_BUILD = "Jun 22, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
