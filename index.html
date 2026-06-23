@@ -1085,6 +1085,13 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     #page-liverace .race-livecard .lc-live{display:inline-flex;align-items:center;gap:8px;flex:none;background:rgba(225,29,72,.20);border:1px solid rgba(225,29,72,.65);color:#fff;font-weight:800;font-size:12px;letter-spacing:.5px;padding:6px 13px;border-radius:999px;white-space:nowrap;animation:lcpill 1.6s ease-in-out infinite}
     #page-liverace .race-livecard .lc-live .dot{width:9px;height:9px;border-radius:50%;background:#fff;flex:none;animation:racepulse 1.1s infinite}
     #page-liverace .race-livecard .lc-live .lc-min{color:#FFD2D9;font-weight:700}
+    #page-liverace .race-livecard .lc-mine{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:9px;border-top:1px solid rgba(255,255,255,.10)}
+    #page-liverace .race-livecard .lc-mine-lab{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#FFB020}
+    #page-liverace .race-livecard .lc-mine-pick{font-size:16px;font-weight:900;color:#fff;letter-spacing:.5px}
+    #page-liverace .race-livecard .lc-mine-pts{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:900;color:var(--muted)}
+    #page-liverace .race-livecard .lc-mine-pts.pos{color:#37D399}
+    #page-liverace .race-livecard .lc-mine-live{font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#fff;background:rgba(225,29,72,.55);padding:1px 6px;border-radius:999px}
+    #page-liverace .race-livecard .lc-mine-none{font-size:12.5px;color:var(--muted);font-style:italic}
     @keyframes racepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
     @keyframes lcpill{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.55)}70%{box-shadow:0 0 0 7px rgba(225,29,72,0)}}
     #page-liverace .race-goal{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;background:linear-gradient(135deg,#E8730C,#FFB020);color:#fff;font-weight:900;font-size:24px;padding:16px 28px;border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.45);z-index:60;text-align:center;transition:transform .35s cubic-bezier(.2,1.3,.4,1),opacity .35s}
@@ -3091,12 +3098,30 @@ function _renderLiveCard(results){
     const goalsRow = (homeG.length || awayG.length)
       ? `<div class="lc-goals"><div class="lc-goals-home">${homeG.map(_goalLine).join("")}</div><div class="lc-goals-away">${awayG.map(_goalLine).join("")}</div></div>`
       : "";
+    // palpite do usuário atual para este jogo + pontos que ele está fazendo AO VIVO
+    let myRow = "";
+    const myUid = currentUser && currentUser.uid;
+    const myBet = (myUid && _raceBets[myUid]) ? _raceBets[myUid][id] : null;
+    if(myBet && myBet.homeGoals !== undefined && myBet.homeGoals !== null){
+      const livePts = calcPoints(myBet, r);
+      const bdg = getResultBadge(livePts);
+      myRow = `<div class="lc-mine">
+        <span class="lc-mine-lab">Your pick</span>
+        <span class="lc-mine-pick">${myBet.homeGoals}\u2013${myBet.awayGoals}</span>
+        <span class="lc-mine-pts ${livePts>0?'pos':'zero'}">
+          <span class="result-badge badge-${bdg.cls}" style="font-size:10px">${bdg.icon}</span>
+          ${livePts>0?'+':''}${livePts} pts <span class="lc-mine-live">live</span>
+        </span>
+      </div>`;
+    } else {
+      myRow = `<div class="lc-mine"><span class="lc-mine-lab">Your pick</span><span class="lc-mine-none">no prediction for this match</span></div>`;
+    }
     return `<div class="race-livecard">
       <div class="lc-top">
         <div class="lc-match">${flagImg(r.homeTeam)} <span>${_raceEsc(r.homeTeam)}</span> <span class="lc-score">${r.homeGoals}\u2013${r.awayGoals}</span> <span>${_raceEsc(r.awayTeam)}</span> ${flagImg(r.awayTeam)}</div>
         <div class="lc-live"><span class="dot"></span> LIVE${r.liveLabel ? ` <span class="lc-min">${_raceEsc(r.liveLabel)}</span>` : ""}</div>
         <button class="md-stats-btn" onclick="openMatchDetail('${id}')">📊 Stats</button>
-      </div>${goalsRow}
+      </div>${goalsRow}${myRow}
     </div>`;
   }).join("");
 }
@@ -3876,7 +3901,7 @@ initFirebase();
 </script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v2.8";
+  var APP_VERSION = "v2.9";
   var APP_BUILD = "Jun 22, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
