@@ -2686,11 +2686,23 @@ function openUserBreakdown(uid){
   const name = _sbNames[uid] || "Player";
   const bets = _sbBetsByUser[uid] || {};
   const results = _sbResults || {};
+  // ordem da partida: grupos usam matchNum (1-72); mata-mata deriva de uma tabela de fases
+  const _roundOrder = { "Round of 32":100, "Round of 16":200, "Quarterfinal":300, "Quarterfinals":300, "Quartas":300, "Semifinal":400, "Semifinals":400, "Third Place":500, "3rd Place":500, "Final":600 };
+  function _matchOrder(m){
+    if(m.matchNum != null) return m.matchNum;
+    if(m.mNo != null) return m.mNo;
+    // mata-mata: combina a fase + o número no id (ex. R32_07 → 100+7)
+    const base = _roundOrder[m.round] || 900;
+    const num = parseInt((m.id||"").replace(/\D+/g,"")) || 0;
+    return base + num;
+  }
   const order = ((typeof ALL_MATCHES !== "undefined" && ALL_MATCHES && ALL_MATCHES.length) ? ALL_MATCHES : GROUP_MATCHES)
     .slice().sort((a,b) => {
+      const na = _matchOrder(a), nb = _matchOrder(b);
+      if(na !== nb) return na - nb;
       const ka = a.kickoff ? new Date(a.kickoff).getTime() : 8e15;
       const kb = b.kickoff ? new Date(b.kickoff).getTime() : 8e15;
-      return (ka - kb) || ((a.matchNum||0) - (b.matchNum||0));
+      return ka - kb;
     });
   let total = 0, perfect = 0, played = 0, shown = 0;
   const rowsHtml = order.map(m => {
@@ -3058,8 +3070,8 @@ function _renderRaceShell(box){
     <div class="race-head">
       <div><div id="raceCaption" class="race-caption">—</div><div id="raceTime" class="race-time"></div></div>
       <div class="race-controls">
-        <button class="btn btn-ghost-light" id="racePlayBtn" onclick="playRace()">⏸ Pause</button>
-        <button class="btn btn-ghost-light" onclick="restartRace()">↻ Replay</button>
+        <button class="btn btn-ghost-light" id="racePlayBtn" onclick="raceToggle()">⏸ Pause</button>
+        <button class="btn btn-ghost-light" id="raceSkipBtn" onclick="raceSkip()">⏭ Pular</button>
       </div>
     </div>
     <div class="race-progress-wrap"><div id="raceProgress" class="race-progress"></div></div>
@@ -3118,19 +3130,46 @@ function renderRaceFrame(idx){
   const pr = document.getElementById("raceProgress"); if(pr) pr.style.width = Math.round((idx+1)/_raceFrames.length*100) + "%";
 }
 
+// rótulo do botão único conforme o estado: tocando / pausado / terminou
+function _raceSetBtn(state){
+  const btn = document.getElementById("racePlayBtn"); if(!btn) return;
+  if(state === "playing")      btn.textContent = "⏸ Pause";
+  else if(state === "finished")btn.textContent = "🔁 Replay";
+  else                         btn.textContent = "▶ Play";   // paused
+}
+
 function playRace(){
-  const btn = document.getElementById("racePlayBtn");
-  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; _racePlaying = false; if(btn) btn.textContent = "▶ Play"; return; }
-  if(_raceIdx >= _raceFrames.length - 1) _raceIdx = 0;
-  _racePlaying = true; if(btn) btn.textContent = "⏸ Pause";
+  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer = null; }
+  if(_raceIdx >= _raceFrames.length - 1) _raceIdx = 0;   // recomeça se estava no fim
+  _racePlaying = true; _raceSetBtn("playing");
   renderRaceFrame(_raceIdx);
   _raceTimer = setInterval(() => {
     const pg = document.getElementById("page-liverace");
     if(!pg || !pg.classList.contains("active")){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; return; }
     _raceIdx++;
-    if(_raceIdx >= _raceFrames.length){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; _raceIdx=_raceFrames.length-1; if(btn) btn.textContent="▶ Play"; return; }
+    if(_raceIdx >= _raceFrames.length){      // animação terminou → vira Replay
+      clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false;
+      _raceIdx=_raceFrames.length-1; _raceSetBtn("finished"); return;
+    }
     renderRaceFrame(_raceIdx);
   }, _RACE_SPEED);
+}
+
+// botão único: pausa se tocando; toca/recomeça se pausado ou terminado
+function raceToggle(){
+  if(_raceTimer){                       // tocando → pausa
+    clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; _raceSetBtn("paused"); return;
+  }
+  playRace();                           // pausado ou no fim → (re)toca
+}
+
+// pula a animação: vai direto pro frame final (pontuação em tempo real)
+function raceSkip(){
+  if(_raceTimer){ clearInterval(_raceTimer); _raceTimer=null; }
+  _racePlaying=false;
+  _raceIdx = Math.max(0, _raceFrames.length - 1);
+  renderRaceFrame(_raceIdx);
+  _raceSetBtn("finished");              // já está no fim → botão vira Replay
 }
 
 function restartRace(){ if(_raceTimer){ clearInterval(_raceTimer); _raceTimer=null; } _raceIdx = 0; renderRaceFrame(0); playRace(); }
@@ -3165,7 +3204,7 @@ function _watchRace(){
       const newTop = new Set(); _raceFrames.forEach(fr => _raceVisible(fr.standings).forEach(s => newTop.add(s.uid)));
       const arr = [...newTop];
       if(arr.length !== _raceEverTop.length || arr.some(u => !_raceEverTop.includes(u))){ _raceEverTop = arr; _renderRaceShell(document.getElementById("raceContent")); _renderLiveCard(results); }
-      if(_raceTimer){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; const b=document.getElementById("racePlayBtn"); if(b) b.textContent="▶ Play"; }
+      if(_raceTimer){ clearInterval(_raceTimer); _raceTimer=null; _racePlaying=false; _raceSetBtn("finished"); }
       _raceIdx = _raceFrames.length - 1;
       renderRaceFrame(_raceIdx);   // nudge the race by just this goal's impact
     } else if(!_racePlaying && _raceIdx >= _raceFrames.length - 1){
@@ -3839,8 +3878,8 @@ initFirebase();
 </script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v2.6";
-  var APP_BUILD = "Jun 18, 2026";
+  var APP_VERSION = "v2.7";
+  var APP_BUILD = "Jun 22, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
 </body>
