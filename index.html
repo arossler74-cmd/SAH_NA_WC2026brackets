@@ -1063,9 +1063,10 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     #page-liverace .race-track{position:relative}
     #page-liverace .race-row{position:absolute;left:0;right:0;height:30px;display:flex;align-items:center;gap:8px;transition:transform .65s cubic-bezier(.4,0,.2,1),opacity .4s}
     #page-liverace .race-rank{width:26px;text-align:center;font-weight:800;color:var(--muted);font-size:14px;flex:none}
-    #page-liverace .race-name{width:130px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;position:relative;cursor:help}
-    #page-liverace .race-tip{position:absolute;left:0;top:calc(100% + 8px);z-index:50;min-width:190px;max-width:260px;background:#0E1430;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:10px 12px;box-shadow:0 16px 40px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .15s,transform .15s;white-space:normal;pointer-events:none}
-    #page-liverace .race-name:hover .race-tip:not(.empty),#page-liverace .race-name:focus .race-tip:not(.empty){opacity:1;visibility:visible;transform:translateY(0)}
+    #page-liverace .race-name{width:130px;font-size:13px;font-weight:700;color:#fff;flex:none;position:relative;cursor:help}
+    #page-liverace .race-name .rn-text{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+    #page-liverace .race-tip{position:absolute;left:0;top:calc(100% + 8px);z-index:200;min-width:190px;max-width:260px;background:#0E1430;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:10px 12px;box-shadow:0 16px 40px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .15s,transform .15s;white-space:normal;pointer-events:none}
+    #page-liverace .race-name:hover .race-tip,#page-liverace .race-name:focus .race-tip,#page-liverace .race-name:focus-within .race-tip{opacity:1;visibility:visible;transform:translateY(0)}
     #page-liverace .race-tip::before{content:"";position:absolute;bottom:100%;left:18px;border:6px solid transparent;border-bottom-color:#0E1430}
     #page-liverace .race-tip .rt-who{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--gold,#E8730C);margin-bottom:7px}
     #page-liverace .race-tip .rt-row{padding:5px 0;border-top:1px solid rgba(255,255,255,.08)}
@@ -3079,7 +3080,7 @@ async function loadLiveRace(){
 function _renderRaceShell(box){
   const rows = _raceEverTop.map(uid => `
     <div class="race-row${uid===_RACE_AI?' bot':''}" id="racerow-${uid}" style="opacity:0">
-      <span class="race-rank">–</span><span class="race-name" tabindex="0">${_raceEsc(_raceNames[uid])}<span class="race-tip" id="racetip-${uid}"></span></span>
+      <span class="race-rank">–</span><span class="race-name" tabindex="0"><span class="rn-text">${_raceEsc(_raceNames[uid])}</span><span class="race-tip" id="racetip-${uid}"></span></span>
       <div class="race-bar"><i></i></div><span class="race-pts">0</span>
     </div>`).join("");
   box.innerHTML = `
@@ -3101,10 +3102,13 @@ function _renderRaceShell(box){
 function _raceFillTips(liveIds, results){
   _raceEverTop.forEach(uid => {
     const tip = document.getElementById("racetip-"+uid); if(!tip) return;
-    if(!liveIds || !liveIds.length){ tip.innerHTML = ""; tip.classList.add("empty"); return; }
     tip.classList.remove("empty");
     const ub = _raceBets[uid] || {};
     const who = (uid === _RACE_AI) ? "🤖 AI Prediction" : _raceEsc(_raceNames[uid] || "");
+    if(!liveIds || !liveIds.length){
+      tip.innerHTML = `<div class="rt-who">${who}</div><div class="rt-none">no live match right now</div>`;
+      return;
+    }
     const body = liveIds.map(id => {
       const r = results[id];
       const bet = ub[id];
@@ -3941,7 +3945,7 @@ initFirebase();
 </script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v3.0";
+  var APP_VERSION = "v3.1";
   var APP_BUILD = "Jun 22, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
