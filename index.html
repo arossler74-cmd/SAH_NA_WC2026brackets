@@ -100,6 +100,14 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .btn-green { background: var(--green); color: #fff; }
 .btn-green:hover { background: #129a55; }
 
+/* ── PHASE SWITCHER (Phase 1 groups / Phase 2 knockout) ── */
+.phase-switch{display:flex;gap:0;background:var(--navy,#0a1a4f);padding:0 28px;border-bottom:1px solid rgba(255,255,255,.08)}
+.phase-switch button{flex:0 0 auto;background:none;border:none;cursor:pointer;color:#aab4e0;font-family:'Anton',sans-serif;font-size:14px;letter-spacing:.6px;text-transform:uppercase;padding:13px 22px;border-bottom:3px solid transparent;transition:all .15s}
+.phase-switch button:hover{color:#fff}
+.phase-switch button.active{color:#fff;border-bottom-color:var(--orange,#E8730C)}
+.phase-switch .ps-sub{display:block;font-family:'Archivo',sans-serif;font-weight:700;font-size:10px;letter-spacing:.3px;opacity:.7;text-transform:none}
+@media(max-width:600px){ .phase-switch{padding:0 10px} .phase-switch button{padding:11px 14px;font-size:12px} }
+
 /* ── NAV TABS (FIFA: white bar, navy text, navy underline) ── */
 .nav {
   background: #FFFFFF;
@@ -720,6 +728,80 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 .live-badge .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:liveDot 1.4s ease-in-out infinite}
 @keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.5)}50%{box-shadow:0 0 0 6px rgba(225,29,72,0)}}
 @keyframes liveDot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ═══ PHASE 2 — BRACKET STYLES ═══ */
+.br-mecard{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#15205C,#1d2a72);border:1px solid var(--border,#2A3470);border-radius:16px;padding:14px 18px;margin-bottom:16px;flex-wrap:wrap}
+.br-mecard .me-pts{font-family:'Anton',sans-serif;font-size:34px;line-height:1;color:var(--orange,#E8730C)}
+.br-mecard .me-lab{font-size:11px;color:var(--muted,#9aa3d4);text-transform:uppercase;letter-spacing:.6px}
+.br-mecard .me-rank{margin-left:auto;text-align:right}
+.br-mecard .me-rank .pos{font-family:'Anton',sans-serif;font-size:30px;color:var(--gold,#F5B301);line-height:1}
+.br-mecard .me-rank .pos small{font-size:13px;color:var(--muted,#9aa3d4);font-family:'Archivo',sans-serif;font-weight:700}
+.br-wrap{padding:4px 0 16px;width:100%;min-width:0;max-width:100%}
+.br-scrollhint{font-size:11px;color:var(--muted,#9aa3d4);text-align:center;margin:-2px 0 8px}
+.br-tree{display:block;overflow-x:auto;overflow-y:hidden;padding:8px 0 18px;-webkit-overflow-scrolling:touch}
+.br-tree-inner{display:flex;align-items:stretch;gap:0;width:max-content;min-width:100%;padding:0 4px}
+.br-col{display:flex;flex-direction:column;width:184px;flex:none}
+.br-slot{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;min-height:120px;padding:6px 0}
+.br-col .br-node{width:184px;box-sizing:border-box}
+.br-node{background:#15205C;border:1px solid #2A3470;border-radius:10px;color:#fff;padding:9px 11px;overflow:hidden;transition:border-color .2s}
+.br-node.br-tbd{opacity:.85}
+.br-node.br-final{border-color:var(--gold,#F5B301)}
+.br-meta{display:flex;flex-wrap:wrap;gap:2px 6px;font-size:9px;color:var(--muted,#9aa3d4);margin-bottom:5px}
+.br-team{display:flex;align-items:center;gap:7px;padding:3px 0;min-height:26px}
+.br-flag{flex:none;width:22px;height:15px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.br-flag img,.br-node .team-flag-img,.br-flag .flag-abbr{width:22px!important;height:15px!important;object-fit:cover;border-radius:2px;display:inline-block;vertical-align:middle}
+.br-flag .flag-abbr{font-size:9px;font-weight:800;color:#cdd6f5;background:#0d1336;width:auto!important;padding:1px 3px}
+.br-name{flex:1 1 auto;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.br-name-tbd{opacity:.6;font-style:italic}
+.br-rank{display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:16px;height:16px;padding:0 3px;margin-left:5px;border-radius:50%;background:rgba(232,115,12,.22);color:#FFC773;font-size:9px;font-weight:800;vertical-align:middle;line-height:1}
+.br-in{flex:none;width:30px;height:28px;font-size:13px;text-align:center;border-radius:6px;border:1px solid #2A3470;background:#0d1336;color:#fff;font-weight:700}
+.br-in:disabled{opacity:.4}
+.br-in-lock{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:28px;opacity:.6;border:1px dashed #2A3470;border-radius:6px;color:#FFC773;background:transparent}
+.br-foot{font-size:10px;margin-top:5px;color:#cdd6f5;border-top:1px dashed #2A3470;padding-top:5px}
+.br-lockbadge{flex:none;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#FFC773;background:rgba(232,115,12,.14);border:1px solid rgba(232,115,12,.28);padding:1px 6px;border-radius:6px;line-height:1.5;white-space:normal;max-width:100%}
+.br-openbadge{flex:none;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#5BE3A0;background:rgba(22,179,100,.14);border:1px solid rgba(22,179,100,.30);padding:1px 6px;border-radius:6px;line-height:1.5;white-space:normal;max-width:100%}
+.br-coltop{font-size:10px;color:var(--muted,#9aa3d4);text-transform:uppercase;letter-spacing:.6px;font-weight:700;text-align:center;height:18px;line-height:18px;flex:none}
+.br-link{flex:none;width:22px;display:flex;flex-direction:column;position:relative}
+.br-link .elbow{flex:1 1 0;position:relative;min-height:0}
+.br-link .elbow::before{content:"";position:absolute;left:0;top:25%;bottom:25%;width:50%;border:2px solid #2A3470;border-left:none;border-radius:0 8px 8px 0}
+.br-link .elbow::after{content:"";position:absolute;top:50%;width:50%;height:2px;background:#2A3470;right:0}
+.br-col-final{justify-content:flex-start}
+.br-final-center{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;align-items:stretch}
+.br-final-anchor{position:relative}
+.br-slot-final{flex:none;min-height:0;padding:0}
+.br-final-extra{position:absolute;top:100%;left:0;right:0;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.br-3rd-top{margin-top:6px}
+.br-node-wrap{display:flex;flex-direction:column}
+.br-champ{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;background:radial-gradient(circle at 50% 0%,#2a3a8f,#15205C);border:2px solid var(--gold,#F5B301);border-radius:14px;padding:12px 10px;width:184px;box-shadow:0 0 20px rgba(245,179,1,.18)}
+.br-champ .cup{font-size:34px;line-height:1}
+.br-champ .clab{font-size:10px;color:var(--gold,#F5B301);text-transform:uppercase;letter-spacing:1px;font-weight:800}
+.br-champ .who{font-family:'Anton',sans-serif;font-size:18px;color:#fff;line-height:1.1}
+.br-hint{font-size:12px;color:var(--muted,#9aa3d4);text-align:center;margin:2px 0 12px;line-height:1.5}
+.br-savebar{position:sticky;bottom:0;background:linear-gradient(0deg,#0a1640 60%,transparent);padding:12px 0;display:flex;justify-content:center;z-index:5}
+/* (removed duplicate .sched-row/.sched-kick/.sched-grp — the Phase 1 grid styles
+   above now apply to BOTH the group and knockout calendars) */
+.kc-day{background:#15205C;border:1px solid #2A3470;border-radius:14px;padding:6px 14px;margin-bottom:14px}
+.kc-day.kc-today{border-color:var(--orange,#E8730C);box-shadow:0 0 0 1px rgba(232,115,12,.3)}
+.kc-dayhdr{font-family:'Anton',sans-serif;font-size:16px;color:#fff;letter-spacing:.4px;padding:8px 0;border-bottom:1px solid #2A3470;margin-bottom:4px}
+.kc-todaytag{font-family:'Archivo',sans-serif;font-size:10px;font-weight:800;background:var(--orange,#E8730C);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.kc-row{display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.kc-row:last-child{border-bottom:none}
+.kc-time{flex:none;width:70px;font-weight:800;color:var(--orange,#E8730C);font-size:13px}
+.kc-teams{flex:1;font-size:14px;color:#fff}
+.kc-meta{flex:none;font-size:11px;color:var(--muted,#9aa3d4);text-align:right}
+@media(max-width:600px){ .kc-meta{display:none} .kc-time{width:58px} }
+.kr-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.kr-row:last-child{border-bottom:none}
+.kr-rank{flex:none;width:34px;text-align:center;font-weight:800;color:var(--gold,#F5B301)}
+.kr-bodycol{flex:1;min-width:0}
+.kr-name{font-size:13px;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kr-track{height:9px;border-radius:6px;background:rgba(255,255,255,.10);overflow:hidden}
+.kr-track i{display:block;height:100%;background:linear-gradient(90deg,var(--orange,#E8730C),#FF9B3D);border-radius:6px;transition:width .5s ease}
+.kr-pts{flex:none;width:46px;text-align:right;font-family:'Anton',sans-serif;font-size:18px;color:#fff}
+.kr-livepill{flex:none;background:var(--red,#e8400c);color:#fff;font-weight:800;font-size:11px;padding:3px 10px;border-radius:20px;animation:krpulse 1.4s infinite}
+@keyframes krpulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media(min-width:980px){ .br-slot{min-height:150px} }
+
 </style>
 </head>
 <body>
@@ -739,14 +821,27 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 
 <!-- NAV TABS -->
 <div class="nav-wrap" id="mainNav" style="display:none">
+<div class="phase-switch" id="phaseSwitch">
+  <button id="psGroups" class="active" onclick="setViewPhase('groups')">Phase 1 <span class="ps-sub">Group Stage</span></button>
+  <button id="psKO" onclick="setViewPhase('knockouts')">Phase 2 <span class="ps-sub">Knockout</span></button>
+</div>
 <nav class="nav">
-  <div class="nav-tab" data-page="instructions" onclick="showPage('instructions')">📖 How to Play</div>
-  <div class="nav-tab active" data-page="bets" onclick="showPage('bets')">⚽ My Bets</div>
-  <div class="nav-tab" data-page="results" onclick="showPage('results')">📊 Results</div>
-    <div class="nav-tab" data-page="schedule" onclick="showPage('schedule')">📅 Calendar</div>
-  <div class="nav-tab" data-page="scoreboard" onclick="showPage('scoreboard')">🏆 Leaderboard</div>
-  <div class="nav-tab" data-page="phase2forecast" onclick="showPage('phase2forecast')">🔮 Phase 2 Forecast</div>
-  <div class="nav-tab" data-page="liverace" onclick="showPage('liverace')">🏁 Live Race</div>
+  <!-- Phase 1 (groups) tabs -->
+  <div class="nav-tab" data-phase="groups" data-page="instructions" onclick="showPage('instructions')">📖 How to Play</div>
+  <div class="nav-tab active" data-phase="groups" data-page="bets" onclick="showPage('bets')">⚽ My Bets</div>
+  <div class="nav-tab" data-phase="groups" data-page="results" onclick="showPage('results')">📊 Results</div>
+  <div class="nav-tab" data-phase="groups" data-page="schedule" onclick="showPage('schedule')">📅 Calendar</div>
+  <div class="nav-tab" data-phase="groups" data-page="scoreboard" onclick="showPage('scoreboard')">🏆 Leaderboard</div>
+  <div class="nav-tab" data-phase="groups" data-page="phase2forecast" onclick="showPage('phase2forecast')">🔮 Advancement Forecast</div>
+  <div class="nav-tab" data-phase="groups" data-page="liverace" onclick="showPage('liverace')">🏁 Live Race</div>
+  <!-- Phase 2 (knockout) tabs -->
+  <div class="nav-tab" data-phase="knockouts" data-page="ko-howto" onclick="showPage('ko-howto')" style="display:none">📖 How to Play</div>
+  <div class="nav-tab" data-phase="knockouts" data-page="bracket" onclick="showPage('bracket')" style="display:none">🗺️ Bracket</div>
+  <div class="nav-tab" data-phase="knockouts" data-page="ko-calendar" onclick="showPage('ko-calendar')" style="display:none">📅 Calendar</div>
+  <div class="nav-tab" data-phase="knockouts" data-page="ko-leaderboard" onclick="showPage('ko-leaderboard')" style="display:none">🏆 Leaderboard</div>
+  <div class="nav-tab" data-phase="knockouts" data-page="ko-liverace" onclick="showPage('ko-liverace')" style="display:none">🏁 Live Race</div>
+  <div class="nav-tab admin-only" data-phase="knockouts" data-page="admin-ko" onclick="showPage('admin-ko')" style="display:none">🛠️ KO Admin</div>
+  <!-- Admin (shared) -->
   <div class="nav-tab admin-only" data-page="admin-results" onclick="showPage('admin-results')" style="display:none">📋 Enter Results</div>
   <div class="nav-tab admin-only" data-page="admin-users" onclick="showPage('admin-users')" style="display:none">👥 Members</div>
   <div class="nav-tab admin-only" data-page="admin-invites" onclick="showPage('admin-invites')" style="display:none">🔗 Invites</div>
@@ -1043,7 +1138,7 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
   <div class="main">
     <div class="section-header">
       <div>
-        <div class="section-title">🔮 Phase 2 Forecast</div>
+        <div class="section-title">🔮 Advancement Forecast</div>
         <div class="section-sub">Who advances to the knockouts — based on everyone's picks</div>
       </div>
       <button class="btn btn-ghost" onclick="loadPhase2Forecast()">↻ Refresh</button>
@@ -1120,6 +1215,182 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
       </div>
     </div>
     <div id="raceContent"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 2 — BRACKET ═══════ -->
+<div id="page-bracket" class="page">
+  <div class="main bets-main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🏆 Knockout Bracket — World Cup 2026</div>
+        <div class="section-sub">Predict each match score round by round. Slots open as teams are confirmed. <span class="br-rank" style="margin:0 2px">#</span> = FIFA world ranking.</div>
+      </div>
+    </div>
+    <div id="bracketWrap"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 2 — HOW TO PLAY ═══ -->
+<div id="page-ko-howto" class="page">
+  <div class="main">
+    <div class="howto-hero">
+      <div class="howto-hero-emoji">🏆</div>
+      <h1 style="font-family:'Anton',sans-serif;font-size:30px;color:#fff;margin:0">Phase 2 — Knockout</h1>
+      <p class="howto-p" style="max-width:560px;margin:8px auto 0">A brand-new contest that picks up where the group stage ends. Predict every knockout score, all the way to the Champion.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="howto-h"><span class="howto-num">1</span> A separate contest</div>
+      <p class="howto-p">Phase 2 has its own <strong>$20 buy-in</strong> and its own leaderboard — it starts from <strong>zero</strong>, fully independent of Phase 1. Anyone can join, whether or not they played the group stage. There are <strong>32 matches</strong> in all: Round of 32, Round of 16, Quarterfinals, Semifinals, the 3rd-place match and the Final.</p>
+      <div class="howto-note">💵 Send your $20 buy-in to <strong>Ariel Vargas</strong> via Zelle at <strong>(949) 337-7527</strong>. You can fill in your bracket before paying — your picks still count — but you must be paid to win the pot.</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="howto-h"><span class="howto-num">2</span> When to bet</div>
+      <p class="howto-p">Open the <strong>🗺️ Bracket</strong> tab. Each match opens once both teams are confirmed and closes a few hours before kickoff (every card shows the exact deadline).</p>
+      <div class="step"><div class="step-ico">🔒</div><div><strong>To be defined</strong> — the match is locked until both teams are known (shows a lock and the slot, e.g. "Win 74" or "3rd CDFGH").</div></div>
+      <div class="step"><div class="step-ico">✍️</div><div><strong>Open</strong> — type your score in both boxes and hit <strong>💾 Save predictions</strong>. You can change a pick as many times as you like until the deadline.</div></div>
+      <div class="step"><div class="step-ico">🔒</div><div><strong>Closes before kickoff</strong> — after the deadline the pick locks and can't be changed.</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="howto-h"><span class="howto-num">3</span> How points work</div>
+      <p class="howto-p">Each prediction earns points based on how close you got:</p>
+      <div class="prize-grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="prize-box gold"><div class="prize-pct" style="font-size:24px">15</div><div class="prize-lbl">Exact score</div></div>
+        <div class="prize-box"><div class="prize-pct" style="font-size:24px">8</div><div class="prize-lbl">Winner + one team's goals</div></div>
+        <div class="prize-box"><div class="prize-pct" style="font-size:24px">5</div><div class="prize-lbl">Right winner only</div></div>
+        <div class="prize-box"><div class="prize-pct" style="font-size:24px">3</div><div class="prize-lbl">One team's goals (wrong winner)</div></div>
+      </div>
+      <div class="howto-note" style="margin-top:12px">➕ <strong>+2 goal-difference bonus</strong> if you nail the margin (e.g. you said 2–1 and it ended 3–2).</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="howto-h"><span class="howto-num">4</span> Later rounds are worth more</div>
+      <p class="howto-p">Base points are multiplied each round, so the deep rounds decide the title:</p>
+      <div class="step"><div class="step-ico">①</div><div><strong>Round of 32</strong> — ×1.0</div></div>
+      <div class="step"><div class="step-ico">②</div><div><strong>Round of 16</strong> — ×1.5</div></div>
+      <div class="step"><div class="step-ico">③</div><div><strong>Quarterfinals</strong> — ×2.5</div></div>
+      <div class="step"><div class="step-ico">④</div><div><strong>Semifinals</strong> — ×4</div></div>
+      <div class="step"><div class="step-ico">⑤</div><div><strong>Final &amp; 3rd place</strong> — ×6 &nbsp;<span style="color:var(--muted)">(an exact score in the Final = 90 pts!)</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="howto-h"><span class="howto-num">5</span> Extra time &amp; penalties</div>
+      <p class="howto-p"><strong>Goals are scored by normal time (90 min).</strong> If a match is tied at full time, your goal/score points are judged on that 90-minute score. But the <strong>winner</strong> for scoring is whoever <strong>advances</strong> — including on penalties — so a correct "who goes through" still earns you the winner points.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 2 — CALENDAR ═════ -->
+<div id="page-ko-calendar" class="page">
+    <div class="main">
+      <div class="section-header">
+        <div>
+          <div class="section-title">📅 Knockout Calendar</div>
+          <div class="section-sub">Knockout fixtures · times shown in your local zone (<span id="koCalTz"></span>)</div>
+        </div>
+        <div style="display:flex;gap:10px"><button class="btn btn-accent" onclick="koScrollToToday()">📍 Go to today</button><button class="btn btn-ghost" onclick="renderKoCalendar(true)">↻ Refresh scores</button></div>
+      </div>
+      <div id="koCalendar"><div class="loader"><div class="spinner"></div>Loading...</div></div>
+    </div>
+  </div>
+
+<!-- ═══════════════════════════ PHASE 2 — LEADERBOARD ══ -->
+<div id="page-ko-leaderboard" class="page">
+  <div class="main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🏆 Phase 2 Leaderboard</div>
+        <div class="section-sub">Knockout standings — separate contest from Phase 1</div>
+      </div>
+      <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="loadKoLeaderboard()">↻ Refresh</button></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Players</div><div class="stat-value" id="koSbPlayers">-</div></div>
+      <div class="stat-card"><div class="stat-label">Matches Played</div><div class="stat-value" id="koSbPlayed">-</div><div style="height:6px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:8px"><i id="koSbBar" style="display:block;height:100%;width:0;background:var(--orange);transition:width .45s ease"></i></div></div>
+      <div class="stat-card"><div class="stat-label">Leader</div><div class="stat-value" id="koSbLeader" style="font-size:22px;padding-top:6px">-</div></div>
+    </div>
+
+    <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px;justify-content:space-between">
+      <div>
+        <div class="stat-label">Prize Pool</div>
+        <div style="font-family:'Anton',sans-serif;font-size:34px;color:var(--orange);line-height:1" id="koSbPool">-</div>
+        <div class="stat-sub" id="koSbPoolSub"></div>
+      </div>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">
+        <div style="text-align:center"><div style="font-size:22px">🥇</div><div style="font-weight:800;font-size:18px" id="koSbPrize1">-</div><div class="stat-sub">1st</div></div>
+        <div style="text-align:center"><div style="font-size:22px">🥈</div><div style="font-weight:800;font-size:18px" id="koSbPrize2">-</div><div class="stat-sub">2nd</div></div>
+        <div style="text-align:center"><div style="font-size:22px">🥉</div><div style="font-weight:800;font-size:18px" id="koSbPrize3">-</div><div class="stat-sub">3rd</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="scoreboard-table">
+        <thead><tr><th>#</th><th>Player</th><th>Exact Scores</th><th>Partial Hits</th><th style="text-align:right">Points</th></tr></thead>
+        <tbody id="koSbBody"><tr><td colspan="5" class="loader"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 2 — LIVE RACE ════ -->
+<div id="page-ko-liverace" class="page">
+  <div class="main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🏁 Phase 2 Live Race</div>
+        <div class="section-sub">Knockout standings as scores land — refresh to update</div>
+      </div>
+      <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="loadKoLiveRace()">↻ Refresh</button></div>
+    </div>
+    <div id="koRace"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 2 — KO ADMIN ════ -->
+<div id="page-admin-ko" class="page">
+  <div class="main">
+    <div class="section-header"><div><div class="section-title">🛠️ Knockout Admin (Phase 2)</div><div class="section-sub">Scores sync automatically from ESPN. You only set who advanced on ties, and can reopen betting.</div></div></div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><strong>✖️ Round multipliers (Phase 2 scoring)</strong></div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Base points (15 exact / 8 winner+score / 5 winner / 3 one score / +2 diff) are multiplied each round, so later rounds decide the title. Edit and save.</div>
+      <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap">
+        <label style="font-size:12px;font-weight:700">R32 <input class="input-select" type="number" step="0.1" min="0" id="mR32" value="1.0" style="width:64px;text-align:center;display:block;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700">R16 <input class="input-select" type="number" step="0.1" min="0" id="mR16" value="1.5" style="width:64px;text-align:center;display:block;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700">QF <input class="input-select" type="number" step="0.1" min="0" id="mQF" value="2.5" style="width:64px;text-align:center;display:block;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700">SF <input class="input-select" type="number" step="0.1" min="0" id="mSF" value="4.0" style="width:64px;text-align:center;display:block;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700">Final/3rd <input class="input-select" type="number" step="0.1" min="0" id="mFINAL" value="6.0" style="width:64px;text-align:center;display:block;margin-top:4px"></label>
+        <button class="btn btn-gold" style="padding:8px 16px;font-size:12px;align-self:flex-end" onclick="saveP2Multipliers()">💾 Save</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><strong>🔒 Betting lock</strong></div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Each knockout match opens once both teams are confirmed and closes automatically before kickoff.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:700">Close betting</span>
+        <input class="input-select" type="number" min="0" max="168" step="1" id="p2LockHours" value="3" style="width:80px;text-align:center" />
+        <span style="font-size:13px;font-weight:700">hours before kickoff</span>
+        <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="saveP2LockHours()">💾 Save</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><strong>🔄 Sync results from ESPN</strong></div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Pulls the latest official scores (groups + knockout) into the pool. Knockout brackets advance automatically from these results.</div>
+      <button class="btn btn-accent" style="margin-top:12px" onclick="koSyncEspn()">🔄 Sync now</button>
+      <span id="p2SyncStatus" style="font-size:12px;color:var(--muted);margin-left:10px"></span>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><strong>⚽ Penalty shootouts — who advanced?</strong></div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:8px">When a knockout match is tied at full time, ESPN gives the score but the bracket needs to know who went through on penalties. Set it here for any tied match that's missing it.</div>
+      <div id="p2AdvList"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
   </div>
 </div>
 
@@ -1344,6 +1615,14 @@ const ADMIN_EMAIL = "arossler74@gmail.com";
 const POOL_PREFIX = "";
 function col(name) { return db.collection(POOL_PREFIX + name); }
 
+// ── SANDBOX (read-only) mode ──────────────────────────────────────────
+// When true, the app reads REAL Firebase data but BLOCKS every write
+// (bets, results, payments, overrides, config). Nothing is saved to the
+// database — safe for testing. Set back to false for the live app.
+// NOTE: this is a client-side guard for safe testing, not a security barrier.
+const SANDBOX_READONLY = false;
+// ──────────────────────────────────────────────────────────────────────
+
 // Pool economics
 const BUY_IN_USD = 20;                                 // contribution per player
 const PRIZE_PCT = { first: 0.60, second: 0.30, third: 0.10 };
@@ -1434,6 +1713,19 @@ function flagImg(team) {
   const abbr = FLAG_ABBR[team] || (team.slice(0,3).toUpperCase());
   const img = `<img class="team-flag-img" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="${team}" loading="lazy" onerror="this.outerHTML='<span class=&quot;flag-abbr&quot;>${abbr}</span>'">`;
   return `<span class="flag-stack">${img}${fifaRankChip(team)}</span>`;
+}
+
+// Bracket-only: flag image WITHOUT the FIFA chip (chip breaks the narrow cards).
+function _brFlagImg(team){
+  const code = FLAG_CODES[team];
+  if(!code) return `<span class="team-flag team-flag-tbd">🏳️</span>`;
+  const abbr = FLAG_ABBR[team] || (team.slice(0,3).toUpperCase());
+  return `<img class="team-flag-img" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="${team}" loading="lazy" onerror="this.outerHTML='<span class=&quot;flag-abbr&quot;>${abbr}</span>'">`;
+}
+// Bracket-only: small FIFA rank in a circle (with legend on the bracket page).
+function _brRankChip(team){
+  const r = (typeof FIFA_RANK!=="undefined") ? FIFA_RANK[team] : null;
+  return r ? `<span class="br-rank" title="FIFA World Ranking">${r}</span>` : '';
 }
 
 // Approximate FIFA ranking points per team (factual rating data; used only to
@@ -1638,6 +1930,10 @@ const MATCH_INFO = {
 };
 // Display helpers — all render in the viewer's local time zone.
 function fmtKick(iso){ if(!iso) return ""; try{ return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }catch(e){ return ""; } }
+// Short timezone abbreviation (e.g. "ET", "PT") for the viewer's local zone.
+function tzAbbr(){ try{ return new Intl.DateTimeFormat([], {timeZoneName:"short"}).formatToParts(new Date()).find(p=>p.type==="timeZoneName")?.value||""; }catch(e){ return ""; } }
+// Kickoff time with the local tz abbreviation appended (e.g. "1:00 PM PT").
+function fmtKickTz(iso){ const t=fmtKick(iso); const z=tzAbbr(); return z?(t+" "+z):t; }
 function fmtDateShort(iso){ if(!iso) return ""; try{ return new Date(iso).toLocaleDateString([], {month:"short", day:"numeric"}); }catch(e){ return ""; } }
 function fmtDayHeader(iso){ try{ return new Date(iso).toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"}); }catch(e){ return ""; } }
 function localDayKey(iso){ const d=new Date(iso); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -1651,30 +1947,209 @@ GROUP_MATCHES.forEach(m => {
 
 // Knockout stage placeholder matches
 const KNOCKOUT_MATCHES = [
-  {id:"R32_01",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group A",awayTeam:"3rd B/C/D",date:"Jun 29"},
-  {id:"R32_02",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group C",awayTeam:"3rd A/B/E",date:"Jun 29"},
-  {id:"R32_03",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group B",awayTeam:"3rd A/C/F",date:"Jun 30"},
-  {id:"R32_04",phase:"knockouts",round:"Round of 32",homeTeam:"2nd Group A",awayTeam:"2nd Group B",date:"Jun 30"},
-  {id:"R32_05",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group D",awayTeam:"2nd Group C",date:"Jul 1"},
-  {id:"R32_06",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group E",awayTeam:"3rd D/F/G",date:"Jul 1"},
-  {id:"R32_07",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group F",awayTeam:"2nd Group E",date:"Jul 2"},
-  {id:"R32_08",phase:"knockouts",round:"Round of 32",homeTeam:"2nd Group D",awayTeam:"2nd Group F",date:"Jul 2"},
-  {id:"R32_09",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group G",awayTeam:"3rd H/I/J",date:"Jul 3"},
-  {id:"R32_10",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group H",awayTeam:"2nd Group G",date:"Jul 3"},
-  {id:"R32_11",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group I",awayTeam:"2nd Group J",date:"Jul 4"},
-  {id:"R32_12",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group J",awayTeam:"2nd Group I",date:"Jul 4"},
-  {id:"R32_13",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group K",awayTeam:"3rd G/H/L",date:"Jul 5"},
-  {id:"R32_14",phase:"knockouts",round:"Round of 32",homeTeam:"1st Group L",awayTeam:"2nd Group K",date:"Jul 5"},
-  {id:"R32_15",phase:"knockouts",round:"Round of 32",homeTeam:"2nd Group H",awayTeam:"2nd Group L",date:"Jul 6"},
-  {id:"R32_16",phase:"knockouts",round:"Round of 32",homeTeam:"3rd Best 1",awayTeam:"3rd Best 2",date:"Jul 6"},
-  ...["07/Jul","07/Jul","08/Jul","08/Jul","09/Jul","09/Jul","10/Jul","10/Jul"].map((d,i)=>({
-    id:`R16_0${i+1}`,phase:"knockouts",round:"Round of 16",homeTeam:`Winner R32-${String(i*2+1).padStart(2,'0')}`,awayTeam:`Winner R32-${String(i*2+2).padStart(2,'0')}`,date:d
-  })),
-  {id:"SF_01",phase:"knockouts",round:"Semifinal",homeTeam:"Winner QF-1",awayTeam:"Winner QF-2",date:"Jul 14"},
-  {id:"SF_02",phase:"knockouts",round:"Semifinal",homeTeam:"Winner QF-3",awayTeam:"Winner QF-4",date:"Jul 15"},
-  {id:"3RD",phase:"knockouts",round:"3rd Place",homeTeam:"Loser SF-1",awayTeam:"Loser SF-2",date:"Jul 18"},
-  {id:"FINAL",phase:"knockouts",round:"Final",homeTeam:"Winner SF-1",awayTeam:"Winner SF-2",date:"Jul 19"},
+  // OFFICIAL FIFA 2026 knockout bracket (matches 73-104). slot codes: "1X"/"2X" = group winner/runner-up, "3:A/B/.." = best 3rd among those groups, "Wnn"/"Lnn" = winner/loser of match nn
+  {id:"R32_73",mNo:73,phase:"knockouts",round:"Round of 32",homeSlot:"2A",awaySlot:"2B",homeTeam:"2nd Group A",awayTeam:"2nd Group B",venue:"Los Angeles",date:"28/Jun",kickoff:"2026-06-28T19:00:00Z"},
+  {id:"R32_74",mNo:74,phase:"knockouts",round:"Round of 32",homeSlot:"1E",awaySlot:"3:A/B/C/D/F",homeTeam:"1st Group E",awayTeam:"Best 3rd (A/B/C/D/F)",venue:"Boston",date:"29/Jun",kickoff:"2026-06-29T20:30:00Z"},
+  {id:"R32_75",mNo:75,phase:"knockouts",round:"Round of 32",homeSlot:"1F",awaySlot:"2C",homeTeam:"1st Group F",awayTeam:"2nd Group C",venue:"Monterrey",date:"29/Jun",kickoff:"2026-06-30T01:00:00Z"},
+  {id:"R32_76",mNo:76,phase:"knockouts",round:"Round of 32",homeSlot:"1C",awaySlot:"2F",homeTeam:"1st Group C",awayTeam:"2nd Group F",venue:"Houston",date:"29/Jun",kickoff:"2026-06-29T17:00:00Z"},
+  {id:"R32_77",mNo:77,phase:"knockouts",round:"Round of 32",homeSlot:"1I",awaySlot:"3:C/D/F/G/H",homeTeam:"1st Group I",awayTeam:"Best 3rd (C/D/F/G/H)",venue:"New York/New Jersey",date:"30/Jun",kickoff:"2026-06-30T21:00:00Z"},
+  {id:"R32_78",mNo:78,phase:"knockouts",round:"Round of 32",homeSlot:"2E",awaySlot:"2I",homeTeam:"2nd Group E",awayTeam:"2nd Group I",venue:"Arlington (Dallas)",date:"30/Jun",kickoff:"2026-06-30T17:00:00Z"},
+  {id:"R32_79",mNo:79,phase:"knockouts",round:"Round of 32",homeSlot:"1A",awaySlot:"3:C/E/F/H/I",homeTeam:"1st Group A",awayTeam:"Best 3rd (C/E/F/H/I)",venue:"Mexico City",date:"30/Jun",kickoff:"2026-07-01T01:00:00Z"},
+  {id:"R32_80",mNo:80,phase:"knockouts",round:"Round of 32",homeSlot:"1L",awaySlot:"3:E/H/I/J/K",homeTeam:"1st Group L",awayTeam:"Best 3rd (E/H/I/J/K)",venue:"Atlanta",date:"01/Jul",kickoff:"2026-07-01T16:00:00Z"},
+  {id:"R32_81",mNo:81,phase:"knockouts",round:"Round of 32",homeSlot:"1D",awaySlot:"3:B/E/F/I/J",homeTeam:"1st Group D",awayTeam:"Best 3rd (B/E/F/I/J)",venue:"San Francisco Bay",date:"01/Jul",kickoff:"2026-07-02T00:00:00Z"},
+  {id:"R32_82",mNo:82,phase:"knockouts",round:"Round of 32",homeSlot:"1G",awaySlot:"3:A/E/H/I/J",homeTeam:"1st Group G",awayTeam:"Best 3rd (A/E/H/I/J)",venue:"Seattle",date:"01/Jul",kickoff:"2026-07-01T20:00:00Z"},
+  {id:"R32_83",mNo:83,phase:"knockouts",round:"Round of 32",homeSlot:"2K",awaySlot:"2L",homeTeam:"2nd Group K",awayTeam:"2nd Group L",venue:"Toronto",date:"02/Jul",kickoff:"2026-07-02T23:00:00Z"},
+  {id:"R32_84",mNo:84,phase:"knockouts",round:"Round of 32",homeSlot:"1H",awaySlot:"2J",homeTeam:"1st Group H",awayTeam:"2nd Group J",venue:"Los Angeles",date:"02/Jul",kickoff:"2026-07-02T19:00:00Z"},
+  {id:"R32_85",mNo:85,phase:"knockouts",round:"Round of 32",homeSlot:"1B",awaySlot:"3:E/F/G/I/J",homeTeam:"1st Group B",awayTeam:"Best 3rd (E/F/G/I/J)",venue:"Vancouver",date:"03/Jul",kickoff:"2026-07-03T03:00:00Z"},
+  {id:"R32_86",mNo:86,phase:"knockouts",round:"Round of 32",homeSlot:"1J",awaySlot:"2H",homeTeam:"1st Group J",awayTeam:"2nd Group H",venue:"Miami",date:"03/Jul",kickoff:"2026-07-03T22:00:00Z"},
+  {id:"R32_87",mNo:87,phase:"knockouts",round:"Round of 32",homeSlot:"1K",awaySlot:"3:D/E/I/J/L",homeTeam:"1st Group K",awayTeam:"Best 3rd (D/E/I/J/L)",venue:"Kansas City",date:"03/Jul",kickoff:"2026-07-04T01:30:00Z"},
+  {id:"R32_88",mNo:88,phase:"knockouts",round:"Round of 32",homeSlot:"2D",awaySlot:"2G",homeTeam:"2nd Group D",awayTeam:"2nd Group G",venue:"Arlington (Dallas)",date:"03/Jul",kickoff:"2026-07-03T18:00:00Z"},
+  {id:"R16_89",mNo:89,phase:"knockouts",round:"Round of 16",homeSlot:"W74",awaySlot:"W77",homeTeam:"Winner Match 74",awayTeam:"Winner Match 77",venue:"New York/New Jersey",date:"04/Jul",kickoff:"2026-07-04T21:00:00Z"},
+  {id:"R16_90",mNo:90,phase:"knockouts",round:"Round of 16",homeSlot:"W73",awaySlot:"W75",homeTeam:"Winner Match 73",awayTeam:"Winner Match 75",venue:"Houston",date:"04/Jul",kickoff:"2026-07-04T17:00:00Z"},
+  {id:"R16_91",mNo:91,phase:"knockouts",round:"Round of 16",homeSlot:"W76",awaySlot:"W78",homeTeam:"Winner Match 76",awayTeam:"Winner Match 78",venue:"New York/New Jersey",date:"05/Jul",kickoff:"2026-07-05T20:00:00Z"},
+  {id:"R16_92",mNo:92,phase:"knockouts",round:"Round of 16",homeSlot:"W79",awaySlot:"W80",homeTeam:"Winner Match 79",awayTeam:"Winner Match 80",venue:"Mexico City",date:"05/Jul",kickoff:"2026-07-06T00:00:00Z"},
+  {id:"R16_93",mNo:93,phase:"knockouts",round:"Round of 16",homeSlot:"W83",awaySlot:"W84",homeTeam:"Winner Match 83",awayTeam:"Winner Match 84",venue:"Dallas",date:"06/Jul",kickoff:"2026-07-06T19:00:00Z"},
+  {id:"R16_94",mNo:94,phase:"knockouts",round:"Round of 16",homeSlot:"W81",awaySlot:"W82",homeTeam:"Winner Match 81",awayTeam:"Winner Match 82",venue:"Seattle",date:"06/Jul",kickoff:"2026-07-07T00:00:00Z"},
+  {id:"R16_95",mNo:95,phase:"knockouts",round:"Round of 16",homeSlot:"W86",awaySlot:"W88",homeTeam:"Winner Match 86",awayTeam:"Winner Match 88",venue:"Atlanta",date:"07/Jul",kickoff:"2026-07-07T16:00:00Z"},
+  {id:"R16_96",mNo:96,phase:"knockouts",round:"Round of 16",homeSlot:"W85",awaySlot:"W87",homeTeam:"Winner Match 85",awayTeam:"Winner Match 87",venue:"Vancouver",date:"07/Jul",kickoff:"2026-07-07T20:00:00Z"},
+  {id:"QF_97",mNo:97,phase:"knockouts",round:"Quarterfinal",homeSlot:"W89",awaySlot:"W90",homeTeam:"Winner Match 89",awayTeam:"Winner Match 90",venue:"Boston",date:"09/Jul",kickoff:"2026-07-09T20:00:00Z"},
+  {id:"QF_98",mNo:98,phase:"knockouts",round:"Quarterfinal",homeSlot:"W93",awaySlot:"W94",homeTeam:"Winner Match 93",awayTeam:"Winner Match 94",venue:"Los Angeles",date:"10/Jul",kickoff:"2026-07-10T19:00:00Z"},
+  {id:"QF_99",mNo:99,phase:"knockouts",round:"Quarterfinal",homeSlot:"W91",awaySlot:"W92",homeTeam:"Winner Match 91",awayTeam:"Winner Match 92",venue:"Miami",date:"11/Jul",kickoff:"2026-07-11T21:00:00Z"},
+  {id:"QF_100",mNo:100,phase:"knockouts",round:"Quarterfinal",homeSlot:"W95",awaySlot:"W96",homeTeam:"Winner Match 95",awayTeam:"Winner Match 96",venue:"Kansas City",date:"11/Jul",kickoff:"2026-07-12T01:00:00Z"},
+  {id:"SF_101",mNo:101,phase:"knockouts",round:"Semifinal",homeSlot:"W97",awaySlot:"W98",homeTeam:"Winner Match 97",awayTeam:"Winner Match 98",venue:"Dallas",date:"14/Jul",kickoff:"2026-07-14T19:00:00Z"},
+  {id:"SF_102",mNo:102,phase:"knockouts",round:"Semifinal",homeSlot:"W99",awaySlot:"W100",homeTeam:"Winner Match 99",awayTeam:"Winner Match 100",venue:"Atlanta",date:"15/Jul",kickoff:"2026-07-15T19:00:00Z"},
+  {id:"M103",mNo:103,phase:"knockouts",round:"3rd Place",homeSlot:"L101",awaySlot:"L102",homeTeam:"Loser Match 101",awayTeam:"Loser Match 102",venue:"Miami",date:"18/Jul",kickoff:"2026-07-18T21:00:00Z"},
+  {id:"FINAL",mNo:104,phase:"knockouts",round:"Final",homeSlot:"W101",awaySlot:"W102",homeTeam:"Winner Match 101",awayTeam:"Winner Match 102",venue:"New York/New Jersey (MetLife)",date:"19/Jul",kickoff:"2026-07-19T19:00:00Z"},
 ];
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  PHASE 2 — KNOCKOUT ENGINE  (isolated; does not affect Phase 1 groups)
+// ═══════════════════════════════════════════════════════════════════
+
+// Confirmed qualified teams already placed into their R32 slots. Slots not
+// listed stay "TBD" and are auto-filled from official results (ESPN). Update
+// as groups finish. (Updated Jun 27, 2026)
+const SLOT_TEAMS = {
+  // Group winners (1X) and runners-up (2X) — all 12 groups confirmed
+  "1A":"Mexico",      "2A":"South Africa",
+  "1B":"Switzerland", "2B":"Canada",
+  "1C":"Brazil",      "2C":"Morocco",
+  "1D":"United States","2D":"Australia",
+  "1E":"Germany",     "2E":"Ivory Coast",
+  "1F":"Netherlands", "2F":"Japan",
+  "1G":"Belgium",     "2G":"Egypt",
+  "1H":"Spain",       "2H":"Cape Verde",
+  "1I":"France",      "2I":"Norway",
+  "1J":"Argentina",   "2J":"Austria",
+  "1K":"Colombia",    "2K":"Portugal",
+  "1L":"England",     "2L":"Croatia",
+  // Best third-placed teams, mapped to their exact R32 slot codes
+  "3:A/B/C/D/F":"Paraguay",   // Germany's opponent
+  "3:C/D/F/G/H":"Sweden",     // France's opponent
+  "3:C/E/F/H/I":"Ecuador",    // Mexico's opponent
+  "3:E/H/I/J/K":"DR Congo",   // England's opponent
+  "3:B/E/F/I/J":"Bosnia",     // USA's opponent
+  "3:A/E/H/I/J":"Senegal",    // Belgium's opponent
+  "3:E/F/G/I/J":"Algeria",    // Switzerland's opponent
+  "3:D/E/I/J/L":"Ghana"       // Colombia's opponent
+};
+
+// ── Scoring config (Phase 2 only). Base points x round multiplier. ──
+let p2PointsConfig = { perfect: 15, winnerOne: 8, winnerOnly: 5, oneScore: 3, diffBonus: 2,
+  roundMult: { R32:1.0, R16:1.5, QF:2.5, SF:4.0, FINAL:6.0 } };
+
+// ── Auto-lock: bets close X hours before kickoff (admin-configurable). ──
+let P2_LOCK_HOURS = 3;
+let _p2Overrides = {};   // admin-reopened matches: { "R32_73": true }
+let _p2Results = {}, _p2Bets = {}, _p2RO = false;
+
+function _koEsc(s){ return String(s==null?"":s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// round -> multiplier key
+function _p2LockKey(round){
+  if(round==="Round of 32") return "R32";
+  if(round==="Round of 16") return "R16";
+  if(round==="Quarterfinal") return "QF";
+  if(round==="Semifinal")    return "SF";
+  if(round==="Final" || round==="3rd Place") return "FINAL";
+  return null;
+}
+function _p2RoundMultFor(round){
+  const k=_p2LockKey(round); const mm=(p2PointsConfig&&p2PointsConfig.roundMult)||{};
+  const v=k?mm[k]:undefined; return (typeof v==="number"&&v>0)?v:1.0;
+}
+function _p2RoundOf(bet, result){
+  if(result && result.round) return result.round;
+  if(bet && bet.round) return bet.round;
+  const id=(bet&&bet.matchId)||(result&&result.matchId);
+  if(id){ const m=KNOCKOUT_MATCHES.find(x=>x.id===id); if(m) return m.round; }
+  return null;
+}
+function _p2Deadline(m){
+  if(!m||!m.kickoff) return null;
+  const ko=new Date(m.kickoff).getTime();
+  if(isNaN(ko)) return null;
+  return ko - P2_LOCK_HOURS*3600*1000;
+}
+function _p2BetOpenAuto(m){
+  if(!m) return false;
+  const dl=_p2Deadline(m); if(dl===null) return true; return Date.now()<dl;
+}
+function _p2BetOpen(m){
+  if(!m) return false;
+  const r=_p2Results?_p2Results[m.id]:null;
+  const hasResult=r&&r.homeGoals!==undefined&&r.homeGoals!==null;
+  if(hasResult) return false;
+  if(_p2Overrides && _p2Overrides[m.id]===true) return true;
+  const dl=_p2Deadline(m); if(dl===null) return true; return Date.now()<dl;
+}
+
+// real group standings from results (fallback when SLOT_TEAMS lacks a slot)
+function _p2GroupOrder(group, results){
+  const gms = GROUP_MATCHES.filter(m => m.group === group);
+  const T = {};
+  gms.forEach(m => { [m.homeTeam,m.awayTeam].forEach(t => { if(!T[t]) T[t]={team:t,pts:0,gf:0,ga:0,gd:0}; }); });
+  let complete = gms.length>0;
+  gms.forEach(m => {
+    const r = results[m.id];
+    if(!r || r.homeGoals===undefined || r.homeGoals===null || r.live){ complete=false; return; }
+    const h=T[m.homeTeam], a=T[m.awayTeam], hg=+r.homeGoals, ag=+r.awayGoals;
+    h.gf+=hg; h.ga+=ag; a.gf+=ag; a.ga+=hg;
+    if(hg>ag) h.pts+=3; else if(hg<ag) a.pts+=3; else { h.pts++; a.pts++; }
+  });
+  Object.values(T).forEach(t => t.gd = t.gf - t.ga);
+  const order = Object.values(T).sort((x,y) => y.pts-x.pts || y.gd-x.gd || y.gf-x.gf || x.team.localeCompare(y.team));
+  return { order, complete };
+}
+// resolve a slot code to a real team, or null = TBD
+function _koResolve(slot, results){
+  if(!slot) return null;
+  if(SLOT_TEAMS[slot]) return SLOT_TEAMS[slot];   // confirmed override
+  const c = slot[0];
+  if(c==="1" || c==="2"){
+    const { order, complete } = _p2GroupOrder(slot.slice(1), results);
+    return complete && order[c==="1"?0:1] ? order[c==="1"?0:1].team : null;
+  }
+  if(c==="3") return null; // best-3rd allocation comes later
+  if(c==="W" || c==="L"){
+    const m = KNOCKOUT_MATCHES.find(x => x.mNo === parseInt(slot.slice(1),10));
+    if(!m) return null;
+    const r = results[m.id];
+    if(!r || r.homeGoals===undefined || r.homeGoals===null || r.live) return null;
+    const home=_koResolve(m.homeSlot,results), away=_koResolve(m.awaySlot,results);
+    if(!home || !away) return null;
+    const hg=+r.homeGoals, ag=+r.awayGoals;
+    let homeWon;
+    if(hg===ag){
+      if(r.advanced==="home") homeWon=true;
+      else if(r.advanced==="away") homeWon=false;
+      else return null;             // tie: admin hasn't set who advanced
+    } else { homeWon = hg>ag; }
+    return (c==="W") === homeWon ? home : away;
+  }
+  return null;
+}
+// short label from a slot code
+function _koSlotLabel(slot){
+  if(!slot) return "?";
+  const c=slot[0];
+  if(c==="1"||c==="2") return slot;
+  if(c==="3") return "3rd "+slot.slice(2).replace(/\//g,"");
+  if(c==="W") return "Win "+slot.slice(1);
+  if(c==="L") return "Lose "+slot.slice(1);
+  return slot;
+}
+function _koByNo(no){ return KNOCKOUT_MATCHES.find(m=>m.mNo===no); }
+
+// Phase 2 points: goals/score by normal time; winner = who ADVANCED (incl. PKs)
+function p2CalcPoints(bet, result){
+  const bH=parseInt(bet.homeGoals), bA=parseInt(bet.awayGoals);
+  const rH=parseInt(result.homeGoals), rA=parseInt(result.awayGoals);
+  if(isNaN(bH)||isNaN(bA)||isNaN(rH)||isNaN(rA)) return 0;
+  const correctHome=bH===rH, correctAway=bA===rA;
+  const rWin=(rH===rA)?(result.advanced==="home"?"home":result.advanced==="away"?"away":"draw"):(rH>rA?"home":"away");
+  const bWin=bH>bA?"home":bH<bA?"away":"draw";
+  const correctWinner=(bWin!=="draw"&&bWin===rWin)||(bWin==="draw"&&rWin==="draw");
+  let base=0;
+  if(correctHome&&correctAway) base=p2PointsConfig.perfect;
+  else if(correctWinner&&(correctHome||correctAway)) base=p2PointsConfig.winnerOne;
+  else if(correctWinner) base=p2PointsConfig.winnerOnly;
+  else if(correctHome||correctAway) base=p2PointsConfig.oneScore;
+  const db=p2PointsConfig.diffBonus||0;
+  if(db && !(correctHome&&correctAway) && (bH-bA)===(rH-rA)) base+=db;
+  const mult=_p2RoundMultFor(_p2RoundOf(bet, result));
+  return Math.round(base*mult);
+}
+function p2ResultBadge(pts, round){
+  const mult=round?_p2RoundMultFor(round):1.0;
+  const base=mult?(pts/mult):pts;
+  if(base>=p2PointsConfig.perfect) return {cls:"perfect",icon:"🎯",label:"Exact!"};
+  if(base>=p2PointsConfig.winnerOne) return {cls:"win",icon:"✅",label:"Close"};
+  if(base>=p2PointsConfig.winnerOnly) return {cls:"half",icon:"🏆",label:"Winner"};
+  if(base>0) return {cls:"half",icon:"⚽",label:"Partial"};
+  return {cls:"miss",icon:"❌",label:"Miss"};
+}
 
 const ALL_MATCHES = [...GROUP_MATCHES, ...KNOCKOUT_MATCHES];
 
@@ -1704,6 +2179,32 @@ function isBettingOpen() {
 // ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
+// Blocks all Firestore writes when SANDBOX_READONLY is on (reads still work).
+let _sandboxNotified = false;
+function _sandboxBlock(){
+  try{
+    if(!_sandboxNotified){ if(typeof showToast==="function") showToast("🧪 SANDBOX — change not saved (read-only test mode)","error",3500); _sandboxNotified=true; setTimeout(()=>{_sandboxNotified=false;}, 4000); }
+  }catch(e){}
+  // resolve like a successful write so the UI flow doesn't break
+  return Promise.resolve({ sandbox:true });
+}
+function installSandboxGuard(){
+  try{
+    const proto = firebase.firestore.DocumentReference.prototype;
+    ["set","update","delete"].forEach(fn=>{ proto[fn] = function(){ return _sandboxBlock(); }; });
+    const bproto = firebase.firestore.WriteBatch.prototype;
+    ["set","update","delete"].forEach(fn=>{ bproto[fn] = function(){ return this; }; });
+    bproto.commit = function(){ return _sandboxBlock(); };
+    // visible banner
+    document.addEventListener("DOMContentLoaded", ()=>{
+      const b=document.createElement("div");
+      b.textContent="🧪 SANDBOX TEST MODE — reads live data, writes are disabled (nothing is saved)";
+      b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#b3261e;color:#fff;font:700 12px/1.6 sans-serif;text-align:center;padding:6px 10px;letter-spacing:.3px";
+      document.body.appendChild(b); document.body.style.paddingTop="30px";
+    });
+  }catch(e){ console.warn("sandbox guard failed", e); }
+}
+
 function initFirebase() {
   // Capture invite token from URL (?invite=CODE) for self-registration
   try {
@@ -1714,6 +2215,7 @@ function initFirebase() {
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
+    if(SANDBOX_READONLY) installSandboxGuard();
     auth = firebase.auth();
     auth.onAuthStateChanged(onAuthChange);
   } catch(e) {
@@ -1771,6 +2273,7 @@ async function onAuthChange(user) {
     document.getElementById("logoutBtn").style.display = "block";
     document.getElementById("page-login").classList.remove("active");
     document.getElementById("mainNav").style.display = "flex";
+    if(typeof setViewPhase==="function") setViewPhase("groups", true);
 
     // Auto-admin for hardcoded email; create user doc on first login
     const userRef = col("users").doc(user.uid);
@@ -1815,10 +2318,12 @@ async function onAuthChange(user) {
     if(payB) payB.style.display = (!isAdmin && !myData.contributed) ? "block" : "none";
 
     await loadConfig();
+    // App now opens on PHASE 2 (knockout) by default.
+    if(typeof setViewPhase==="function") setViewPhase("knockouts", true);
     if(isAdmin) {
-      showPage("admin-results");   // admins land on their control panel, not betting
+      showPage("admin-ko");        // admins land on the Phase 2 control panel
     } else {
-      showPage("schedule");   // players land on the live match calendar
+      showPage("ko-howto");        // players land on Phase 2 How to Play
       loadBets();
     }
   } else {
@@ -2183,10 +2688,37 @@ function showPage(page) {
   if(page === "scoreboard") loadScoreboard();
   if(page === "phase2forecast") loadPhase2Forecast();
   if(page === "liverace") loadLiveRace();
+  if(page === "bracket") loadBracket();
+  if(page === "ko-calendar") renderKoCalendar();
+  if(page === "ko-leaderboard") loadKoLeaderboard();
+  if(page === "ko-liverace") loadKoLiveRace();
+  if(page === "admin-ko") loadKoAdmin();
   if(page === "admin-users") loadUsers();
   if(page === "admin-results") { buildResultGroupTabs(); loadAdminResults(); loadPointsConfig(); }
   if(page === "admin-invites") loadInviteLink();
   if(page === "admin-points") loadPointsConfig();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHASE SWITCHER (Phase 1 groups / Phase 2 knockout)
+// ═══════════════════════════════════════════════════════════
+let viewPhase = "groups";
+function setViewPhase(ph, skipNav){
+  viewPhase = ph;
+  document.getElementById("psGroups").classList.toggle("active", ph==="groups");
+  document.getElementById("psKO").classList.toggle("active", ph==="knockouts");
+  document.querySelectorAll('.nav-tab[data-phase]').forEach(t => {
+    t.style.display = (t.getAttribute("data-phase")===ph) ? "" : "none";
+  });
+  // shared admin tabs: visible whenever admin (both phases)
+  document.querySelectorAll('.admin-only:not([data-phase])').forEach(t => { t.style.display = isAdmin ? "flex" : "none"; });
+  // phase-scoped admin tabs (e.g. KO Admin): only in their phase AND for admins
+  document.querySelectorAll('.admin-only[data-phase]').forEach(t => {
+    t.style.display = (isAdmin && t.getAttribute("data-phase")===ph) ? "flex" : "none";
+  });
+  if(skipNav) return;
+  if(ph==="knockouts"){ showPage("bracket"); }
+  else { showPage(isAdmin ? "admin-results" : "bets"); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3650,7 +4182,16 @@ async function toggleContribution(uid, current) {
   if(!isAdmin) return;
   try {
     await col("users").doc(uid).update({ contributed: !current });
-    showToast(!current ? "✅ Marked as contributed" : "↩️ Marked as pending");
+    showToast(!current ? "✅ Phase 1 marked as paid" : "↩️ Phase 1 marked as pending");
+    loadUsers();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+async function toggleP2Paid(uid, current) {
+  if(!isAdmin) return;
+  try {
+    await col("users").doc(uid).update({ p2Paid: !current });
+    showToast(!current ? "✅ Phase 2 marked as paid" : "↩️ Phase 2 marked as pending");
     loadUsers();
   } catch(e) { showToast("Error: " + e.message, "error"); }
 }
@@ -3791,9 +4332,14 @@ async function loadUsers() {
         </div>`}
         <div class="user-actions">
           ${u.role !== "admin" ? `<span class="contrib-badge contrib-toggle ${contributed?"contrib-yes":"contrib-no"}"
-            title="Pool contribution — click to toggle"
+            title="Phase 1 contribution — click to toggle"
             onclick="toggleContribution('${u.id}',${contributed})">
-            ${contributed ? "✓ Paid" : "✕ Not paid"} · $${BUY_IN_USD}
+            P1 ${contributed ? "✓" : "✕"} · $${BUY_IN_USD}
+          </span>
+          <span class="contrib-badge contrib-toggle ${(!!u.p2Paid)?"contrib-yes":"contrib-no"}"
+            title="Phase 2 (knockout) contribution — click to toggle"
+            onclick="toggleP2Paid('${u.id}',${!!u.p2Paid})">
+            P2 ${(!!u.p2Paid) ? "✓" : "✕"} · $${BUY_IN_USD}
           </span>` : ""}
           <span class="role-badge ${u.role==="admin"?"role-admin":"role-user"}">${u.role||"user"}</span>
           ${u.id !== currentUser.uid ? `
@@ -3940,14 +4486,473 @@ function closeModal() {
 }
 
 // ═══════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════
+//  PHASE 2 — BRACKET RENDER (single left-to-right, ESPN-style)
+// ═══════════════════════════════════════════════════════════
+const BR_ORDER = {
+  r32: [74,77, 73,75, 83,84, 81,82, 76,78, 79,80, 86,88, 85,87],
+  r16: [89, 90, 93, 94, 91, 92, 95, 96],
+  qf:  [97, 98, 99, 100],
+  sf:  [101, 102],
+};
+let _brMeCard = "";
+
+function loadBracket(){
+  const wrap=document.getElementById("bracketWrap"); if(!wrap) return;
+  _p2RO = (typeof isAdmin!=="undefined" && isAdmin);
+  if(!currentUser){ return; }
+  wrap.innerHTML=`<div class="loader"><div class="spinner"></div></div>`;
+  Promise.all([
+    col("results").get().catch(()=>null),
+    col("bets").where("userId","==",currentUser.uid).get().catch(()=>null),
+    col("config").doc("p2overrides").get().catch(()=>null),
+    col("config").doc("main").get().catch(()=>null)
+  ]).then(async ([rs,bs,ov,cfg])=>{
+    const results={}, bets={};
+    if(rs) rs.forEach(d=>results[d.id]=d.data());
+    if(bs) bs.forEach(d=>{ const x=d.data(); if(x.phase==="knockouts") bets[x.matchId]=x; });
+    _p2Overrides = (ov&&ov.exists) ? (ov.data()||{}) : {};
+    if(cfg&&cfg.exists){
+      const d=cfg.data();
+      if(d.p2Points) p2PointsConfig = Object.assign(p2PointsConfig, d.p2Points);
+      if(typeof d.p2LockHours==="number" && d.p2LockHours>=0) P2_LOCK_HOURS = d.p2LockHours;
+    }
+    _p2Results=results; _p2Bets=bets;
+    const me = await _p2MyStanding(results);
+    let meCard="";
+    if(me){
+      const pos = me.rank ? (me.rank+(me.rank===1?"st":me.rank===2?"nd":me.rank===3?"rd":"th")) : "—";
+      meCard = `<div class="br-mecard">
+        <div><div class="me-pts">${me.pts}</div><div class="me-lab">your points</div></div>
+        <div class="me-rank"><div class="pos">${pos} <small>of ${me.total}</small></div><div class="me-lab">on the leaderboard · ${me.exact} exact scores</div></div>
+      </div>`;
+    }
+    _brMeCard = meCard;
+    _p2RenderTree();
+  });
+}
+
+function _p2RenderTree(){
+  const wrap=document.getElementById("bracketWrap"); if(!wrap) return;
+  const tree=_brTreeHTML();
+  let statusBanner="";
+  if(!_p2RO){
+    let open=0, next=null;
+    for(const m of KNOCKOUT_MATCHES){
+      const home=_koResolve(m.homeSlot,_p2Results), away=_koResolve(m.awaySlot,_p2Results);
+      const r=_p2Results[m.id], live=r&&r.live, has=r&&r.homeGoals!==undefined&&r.homeGoals!==null;
+      if(home&&away&&!has&&!live&&_p2BetOpen(m)){ open++; const dl=_p2Deadline(m); if(dl&&(next===null||dl<next)) next=dl; }
+    }
+    statusBanner = open>0
+      ? `<div class="br-hint" style="margin-top:10px">🔓 <b>${open} match(es) open</b> for betting. Each closes <b>${P2_LOCK_HOURS}h before</b> kickoff${next?` · next closes ${fmtDateShort(new Date(next).toISOString())} ${fmtKick(new Date(next).toISOString())}`:""}.</div>`
+      : `<div class="br-hint" style="margin-top:10px">⏳ No matches open right now. Betting opens as teams are confirmed and closes a few hours before each match.</div>`;
+  }
+  wrap.innerHTML = _brMeCard + `<div class="br-wrap">${tree}</div>` + statusBanner +
+    (_p2RO
+      ? '<div class="br-hint">👁️ Admin view (read-only). Players bet here.</div>'
+      : '<div class="br-savebar"><button class="btn btn-gold" id="brSaveBtn" onclick="saveBracket()">💾 Save predictions</button></div>');
+}
+
+function _brColHTML(top, nos){
+  const cells = nos.map(no=>{ const m=_koByNo(no); return m?`<div class="br-slot">${_brNode(m)}</div>`:""; }).join("");
+  return `<div class="br-col"><div class="br-coltop">${top}</div>${cells}</div>`;
+}
+function _brLinkHTML(count){ let el=""; for(let i=0;i<count;i++) el+=`<div class="elbow"></div>`; return `<div class="br-link"><div class="br-coltop"></div>${el}</div>`; }
+
+function _brTreeHTML(){
+  const champ=_koResolve("W104",_p2Results);
+  const champBox=`<div class="br-champ"><div class="cup">🏆</div><div class="clab">Champion</div><div class="who">${champ?(flagImg(champ)+" "+_koEsc(champ)):"TBD"}</div></div>`;
+  const finalCol = `<div class="br-col br-col-final">
+      <div class="br-coltop">Final</div>
+      <div class="br-final-center"><div class="br-final-anchor">
+        <div class="br-slot br-slot-final">${_brNode(_koByNo(104))}</div>
+        <div class="br-final-extra">${champBox}<div class="br-coltop br-3rd-top">3rd Place</div><div class="br-node-wrap">${_brNode(_koByNo(103))}</div></div>
+      </div></div>
+    </div>`;
+  const inner = `
+    ${_brColHTML("Round of 32", BR_ORDER.r32)}${_brLinkHTML(8)}
+    ${_brColHTML("Round of 16", BR_ORDER.r16)}${_brLinkHTML(4)}
+    ${_brColHTML("Quarterfinals", BR_ORDER.qf)}${_brLinkHTML(2)}
+    ${_brColHTML("Semifinals", BR_ORDER.sf)}${_brLinkHTML(1)}
+    ${finalCol}`;
+  return `<div class="br-scrollhint">↔ swipe sideways to see the whole bracket</div><div class="br-tree"><div class="br-tree-inner br-ltr">${inner}</div></div>`;
+}
+
+function _brNode(m){
+  const home=_koResolve(m.homeSlot,_p2Results), away=_koResolve(m.awaySlot,_p2Results);
+  const hName=home||_koSlotLabel(m.homeSlot), aName=away||_koSlotLabel(m.awaySlot), resolved=!!home&&!!away;
+  const r=_p2Results[m.id], live=r&&r.live, has=r&&r.homeGoals!==undefined&&r.homeGoals!==null;
+  const betOpen=_p2BetOpen(m);
+  const open=betOpen&&resolved&&!has&&!live;
+  const bet=_p2Bets[m.id]||{};
+  const hv=(bet.homeGoals!==undefined?bet.homeGoals:""), av=(bet.awayGoals!==undefined?bet.awayGoals:"");
+  const dis=(open&&!_p2RO)?"":"disabled";
+  const when = m.kickoff ? (fmtDateShort(m.kickoff)+" · "+fmtKickTz(m.kickoff)) : (m.date||"");
+  let meta=`<span>Match ${m.mNo}</span>`;
+  if(when) meta+=`<span>🗓️ ${when}</span>`;
+  if(m.venue) meta+=`<span>📍 ${_koEsc(m.venue)}</span>`;
+  if(!has && !live){
+    if(!resolved) meta+=`<span class="br-lockbadge" title="Teams not defined yet — locked">🔒 to be defined</span>`;
+    else if(!betOpen) meta+=`<span class="br-lockbadge" title="Betting closed — closes ${P2_LOCK_HOURS}h before kickoff">🔒 betting closed</span>`;
+    else {
+      const isOv=_p2Overrides&&_p2Overrides[m.id]===true, autoOpen=_p2BetOpenAuto(m);
+      if(isOv&&!autoOpen) meta+=`<span class="br-openbadge" title="Admin reopened this match">🔓 reopened by admin</span>`;
+      else { const dl=_p2Deadline(m); if(dl) meta+=`<span class="br-openbadge" title="Bet until this time — ${P2_LOCK_HOURS}h before kickoff">🔓 until ${fmtDateShort(new Date(dl).toISOString())}, ${fmtKick(new Date(dl).toISOString())}</span>`; }
+    }
+  }
+  let foot="";
+  if(has){
+    foot=`<div class="br-foot">Result: <b>${r.homeGoals} × ${r.awayGoals}</b>`;
+    if(bet.homeGoals!==undefined) foot+=` · your pick <b>${bet.homeGoals} × ${bet.awayGoals}</b> · <b style="color:var(--orange)">+${p2CalcPoints(bet,r)} pts</b>`;
+    else foot+=` · <span style="opacity:.7">no pick</span>`;
+    foot+=`</div>`;
+  } else if(bet.homeGoals!==undefined && _p2RO){
+    foot=`<div class="br-foot">Pick: <b>${bet.homeGoals} × ${bet.awayGoals}</b></div>`;
+  }
+  function rowHTML(side, realTeam, slot, label, inputId, val){
+    let flg, nameHTML;
+    if(realTeam){ flg=_brFlagImg(realTeam); nameHTML=`<span class="br-name">${_koEsc(realTeam)}${_brRankChip(realTeam)}</span>`; }
+    else { flg="❔"; nameHTML=`<span class="br-name br-name-tbd">${_koEsc(label)}</span>`; }
+    let scoreCell;
+    if(!_p2RO && !has && !live && !betOpen){
+      const why = resolved ? ("Betting closed (closes "+P2_LOCK_HOURS+"h before kickoff)") : "Waiting for the teams";
+      scoreCell=`<span class="br-in br-in-lock" title="${why}">🔒</span>`;
+    } else {
+      scoreCell=`<input class="br-in" id="${inputId}" type="number" min="0" max="20" inputmode="numeric" value="${val}" ${dis}>`;
+    }
+    return `<div class="br-team"><span class="br-flag">${flg}</span>${nameHTML}${scoreCell}</div>`;
+  }
+  return `<div class="br-node ${resolved?'':'br-tbd'} ${m.id==="FINAL"?'br-final':''}" id="brc-${m.id}">
+    <div class="br-meta">${meta}</div>
+    ${rowHTML("home", home, m.homeSlot, hName, "bh_"+m.id, hv)}
+    ${rowHTML("away", away, m.awaySlot, aName, "ba_"+m.id, av)}
+    ${foot}
+  </div>`;
+}
+
+async function saveBracket(){
+  if(isAdmin) return;
+  const btn=document.getElementById("brSaveBtn"); if(btn){ btn.disabled=true; btn.textContent="Saving…"; }
+  let saved=0, err=0;
+  for(const m of KNOCKOUT_MATCHES){
+    if(!_p2BetOpen(m)) continue;
+    const home=_koResolve(m.homeSlot,_p2Results), away=_koResolve(m.awaySlot,_p2Results);
+    const r=_p2Results[m.id], live=r&&r.live, has=r&&r.homeGoals!==undefined&&r.homeGoals!==null;
+    if(!home||!away||has||live) continue;
+    const hEl=document.getElementById("bh_"+m.id), aEl=document.getElementById("ba_"+m.id);
+    if(!hEl||!aEl||hEl.value===""||aEl.value==="") continue;
+    try{
+      await col("bets").doc(`${currentUser.uid}_${m.id}`).set({
+        userId:currentUser.uid, userName: currentUser.displayName||currentUser.email,
+        matchId:m.id, phase:"knockouts", homeTeam:home, awayTeam:away,
+        homeGoals:parseInt(hEl.value), awayGoals:parseInt(aEl.value),
+        round:m.round, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      saved++; _p2Bets[m.id]={matchId:m.id,phase:"knockouts",homeGoals:parseInt(hEl.value),awayGoals:parseInt(aEl.value),round:m.round};
+      const c=document.getElementById("brc-"+m.id); if(c) c.style.borderColor="var(--green)";
+    }catch(e){ err++; }
+  }
+  if(btn){ btn.disabled=false; btn.textContent="💾 Save predictions"; }
+  if(err) showToast(`Save failed for ${err} match(es). ${saved} saved.`,"error",6000);
+  else if(saved) showToast(`✅ ${saved} prediction(s) saved`);
+  else showToast("Fill in at least one score first.","error");
+  setTimeout(()=>{ document.querySelectorAll(".br-node").forEach(c=>c.style.borderColor=""); }, 2000);
+}
+
+// Phase 2 standing for current user
+async function _p2MyStanding(results){
+  try{
+    const bs = await col("bets").get();
+    const byUser={}, names={};
+    bs.forEach(d=>{ const b=d.data(); if(b.phase!=="knockouts"||!b.userId) return; (byUser[b.userId]=byUser[b.userId]||[]).push(b); names[b.userId]=b.userName||""; });
+    const rows=[];
+    for(const uid in byUser){
+      let pts=0, exact=0;
+      byUser[uid].forEach(b=>{ const r=results[b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(parseInt(b.homeGoals)===parseInt(r.homeGoals)&&parseInt(b.awayGoals)===parseInt(r.awayGoals)) exact++; } });
+      rows.push({uid,pts,exact});
+    }
+    rows.sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
+    const total=rows.length;
+    const meIdx=rows.findIndex(r=>r.uid===currentUser.uid);
+    if(meIdx<0) return {pts:0,exact:0,rank:null,total};
+    return {pts:rows[meIdx].pts, exact:rows[meIdx].exact, rank:meIdx+1, total};
+  }catch(e){ return null; }
+}
+
+// ── Phase 2 knockout calendar (same framework as Phase 1 schedule) ──
+let _koSchedResults = null;
+function renderKoCalendar(forceReload){
+  const box=document.getElementById("koCalendar"); if(!box) return;
+  const tz=document.getElementById("koCalTz");
+  if(tz){ try{ tz.textContent=(typeof localTZLabel==="function"?localTZLabel():Intl.DateTimeFormat().resolvedOptions().timeZone); }catch(e){ tz.textContent=""; } }
+
+  const draw = (res) => {
+    _mdResultsCache = res || {};   // so openMatchDetail can resolve knockout results
+    // load my knockout bets for the "your pick" line
+    const myBets = _p2Bets || {};
+    const byDay={};
+    KNOCKOUT_MATCHES.filter(m=>m.kickoff).forEach(m=>{ const k=localDayKey(m.kickoff); (byDay[k]=byDay[k]||[]).push(m); });
+    const days=Object.keys(byDay).sort();
+    if(!days.length){ box.innerHTML=`<div style="padding:20px;color:var(--muted)">No fixtures.</div>`; return; }
+    const now=Date.now();
+    const todayKey=localDayKey(Date.now());
+    const targetDay=days.find(d=>d>=todayKey)||days[days.length-1];
+    window._koSchedTodayId="koschedday-"+targetDay;
+    let html="";
+    for(const day of days){
+      const ms=byDay[day].sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+      const _tag = day===todayKey ? ' <span style="font-size:11px;color:var(--accent,#4256E8);font-weight:800">• today</span>'
+                 : (day===targetDay ? ' <span style="font-size:11px;color:var(--accent,#4256E8);font-weight:800">• next up</span>' : '');
+      html += `<div class="sched-day" id="koschedday-${day}"${day===targetDay?' data-today="1"':''}><div class="sched-day-head">${fmtDayHeader(ms[0].kickoff)}${_tag}</div>`;
+      for(const m of ms){
+        const r=res[m.id];
+        const has = r && r.homeGoals!==undefined && r.homeGoals!==null;
+        const started = new Date(m.kickoff).getTime()<=now;
+        const home=_koResolve(m.homeSlot,res), away=_koResolve(m.awaySlot,res);
+        const hName=home||_koSlotLabel(m.homeSlot), aName=away||_koSlotLabel(m.awaySlot);
+        const hFlag=home?flagImg(home):"❔", aFlag=away?flagImg(away):"❔";
+        const mid = has
+          ? `<span class="sched-score">${r.homeGoals} <span class="x">×</span> ${r.awayGoals}</span>`
+          : `<span class="sched-time">${fmtKickTz(m.kickoff)}</span>`;
+        const status = (has && r.live) ? liveBadge(r)
+                      : (has ? `<span class="sched-badge done">Full time</span>`
+                      : (started ? `<span class="sched-badge live">Kicked off</span>` : ""));
+        // your pick + points
+        const bet = myBets[m.id];
+        let pickLine="";
+        if(bet && bet.homeGoals!==undefined){
+          let pts="";
+          if(has){ const p=p2CalcPoints(bet,r); pts=` · <b style="color:var(--orange)">+${p} pts</b>`; }
+          pickLine=`<div style="grid-column:1 / -1;font-size:12px;color:#cdd6f5;border-top:1px dashed var(--border);padding-top:8px">Your pick: <b>${bet.homeGoals} × ${bet.awayGoals}</b>${pts}</div>`;
+        }
+        html += `
+        <div class="sched-row${has?" has-score":""}" onclick="openMatchDetail('${m.id}')" style="cursor:pointer">
+          <div class="sched-kick">${fmtKick(m.kickoff)}<span class="sched-grp">${m.round}</span></div>
+          <div class="sched-match">
+            <div class="team-name">${hFlag} <span>${_koEsc(hName)}</span></div>
+            <div class="sched-mid">${mid}</div>
+            <div class="team-name right"><span>${_koEsc(aName)}</span> ${aFlag}</div>
+          </div>
+          <div class="sched-venue">📍 ${m.venue?m.venue+" · ":""}Match ${m.mNo} ${status} <button class="md-stats-btn sched-stats" onclick="event.stopPropagation();openMatchDetail('${m.id}')">📊 Stats</button></div>
+          ${pickLine}
+        </div>`;
+      }
+      html += `</div>`;
+    }
+    box.innerHTML = html;
+  };
+
+  if(_koSchedResults===null || forceReload){
+    box.innerHTML=`<div class="loader"><div class="spinner"></div></div>`;
+    // also refresh my bets so the "your pick" line is current
+    Promise.all([
+      col("results").get().catch(()=>null),
+      currentUser ? col("bets").where("userId","==",currentUser.uid).get().catch(()=>null) : Promise.resolve(null)
+    ]).then(([rs,bs])=>{
+      _koSchedResults={}; if(rs) rs.forEach(d=>_koSchedResults[d.id]=d.data());
+      if(bs){ _p2Bets=_p2Bets||{}; bs.forEach(d=>{ const x=d.data(); if(x.phase==="knockouts") _p2Bets[x.matchId]=x; }); }
+      draw(_koSchedResults);
+    });
+  } else {
+    draw(_koSchedResults);
+  }
+}
+function koScrollToToday(){
+  const el = (window._koSchedTodayId && document.getElementById(window._koSchedTodayId)) || document.querySelector("#koCalendar .sched-day");
+  if(!el) return;
+  const y = el.getBoundingClientRect().top + window.pageYOffset - 76;
+  window.scrollTo({ top: Math.max(0,y), behavior:"smooth" });
+}
+
+// ── Phase 2 leaderboard (separate from Phase 1; humans only) ──
+async function loadKoLeaderboard(){
+  const body=document.getElementById("koSbBody"); if(!body) return;
+  body.innerHTML=`<tr><td colspan="5" class="loader"><div class="spinner"></div></td></tr>`;
+  try{
+    const [rs,bs,us] = await Promise.all([ col("results").get(), col("bets").get(), col("users").get() ]);
+    const results={}; rs.forEach(d=>results[d.id]=d.data());
+    if(typeof p2PointsConfig!=="undefined"){ /* uses current config */ }
+    const names={}, paid={}, adminSet=new Set();
+    us.forEach(d=>{ const u=d.data(); if(u.role==="admin"){adminSet.add(d.id);return;} names[d.id]=u.name||u.email||"—"; paid[d.id]=!!u.p2Paid; });
+    const byUser={};
+    bs.forEach(d=>{ const b=d.data(); if(b.phase!=="knockouts"||!b.userId||adminSet.has(b.userId)) return; (byUser[b.userId]=byUser[b.userId]||[]).push(b); });
+    // matches played (knockout results posted)
+    const koIds=new Set(KNOCKOUT_MATCHES.map(m=>m.id));
+    let played=0; KNOCKOUT_MATCHES.forEach(m=>{ const r=results[m.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null) played++; });
+    const rows=[];
+    for(const uid in byUser){
+      let pts=0, exact=0, partial=0;
+      byUser[uid].forEach(b=>{ const r=results[b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(parseInt(b.homeGoals)===parseInt(r.homeGoals)&&parseInt(b.awayGoals)===parseInt(r.awayGoals)) exact++; else if(p>0) partial++; } });
+      rows.push({uid,name:names[uid]||"—",pts,exact,partial,paid:!!paid[uid]});
+    }
+    rows.sort((a,b)=>b.pts-a.pts||b.exact-a.exact||a.name.localeCompare(b.name));
+    // stats + prize pool
+    const playerCount=rows.length;
+    const paidCount=rows.filter(r=>r.paid).length;
+    const pool=playerCount*BUY_IN_USD;
+    const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+    set("koSbPlayers", playerCount);
+    set("koSbPlayed", played+"/"+koIds.size);
+    { const bar=document.getElementById("koSbBar"); if(bar) bar.style.width=(koIds.size?Math.round(played/koIds.size*100):0)+"%"; }
+    set("koSbLeader", rows.length?rows[0].name:"—");
+    set("koSbPool", money(pool));
+    set("koSbPoolSub", paidCount+" of "+playerCount+" paid · $"+BUY_IN_USD+" each");
+    set("koSbPrize1", money(pool*PRIZE_PCT.first));
+    set("koSbPrize2", money(pool*PRIZE_PCT.second));
+    set("koSbPrize3", money(pool*PRIZE_PCT.third));
+    if(!rows.length){ body.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No Phase 2 predictions yet.</td></tr>`; return; }
+    body.innerHTML = rows.map((r,i)=>{
+      const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);
+      const payTag = r.paid?`<span style="color:var(--green);font-size:11px;margin-left:6px">✓ paid</span>`:`<span style="color:#FFC773;font-size:11px;margin-left:6px">unpaid</span>`;
+      return `<tr><td style="text-align:center;font-weight:800">${medal}</td><td>${_koEsc(r.name)}${payTag}</td><td style="text-align:center">${r.exact}</td><td style="text-align:center">${r.partial}</td><td style="text-align:right"><b>${r.pts}</b></td></tr>`;
+    }).join("");
+  }catch(e){ body.innerHTML=`<tr><td colspan="5" style="color:var(--red);padding:20px">Error: ${e.message}</td></tr>`; }
+}
+
+// ── Phase 2 Live Race (bar race by current knockout points) ──
+async function loadKoLiveRace(){
+  const box=document.getElementById("koRace"); if(!box) return;
+  box.innerHTML=`<div class="loader"><div class="spinner"></div></div>`;
+  try{
+    const [rs,bs,us] = await Promise.all([ col("results").get(), col("bets").get(), col("users").get() ]);
+    const results={}; rs.forEach(d=>results[d.id]=d.data());
+    const names={}, adminSet=new Set();
+    us.forEach(d=>{ const u=d.data(); if(u.role==="admin"){adminSet.add(d.id);return;} names[d.id]=u.name||u.email||"—"; });
+    const byUser={};
+    bs.forEach(d=>{ const b=d.data(); if(b.phase!=="knockouts"||!b.userId||adminSet.has(b.userId)) return; (byUser[b.userId]=byUser[b.userId]||[]).push(b); });
+    const liveMatches=KNOCKOUT_MATCHES.filter(m=>{ const r=results[m.id]; return r&&r.live; });
+    const rows=[];
+    for(const uid in byUser){
+      let pts=0, livePts=0;
+      byUser[uid].forEach(b=>{ const r=results[b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(r.live) livePts+=p; } });
+      rows.push({uid,name:names[uid]||"—",pts,livePts});
+    }
+    rows.sort((a,b)=>b.pts-a.pts||a.name.localeCompare(b.name));
+    if(!rows.length){ box.innerHTML=`<div class="card" style="padding:24px;text-align:center;color:var(--muted)">No Phase 2 predictions yet.</div>`; return; }
+    const max=Math.max(1, rows[0].pts);
+    let liveBanner="";
+    if(liveMatches.length){
+      const m=liveMatches[0]; const r=results[m.id];
+      const home=_koResolve(m.homeSlot,results)||_koSlotLabel(m.homeSlot);
+      const away=_koResolve(m.awaySlot,results)||_koSlotLabel(m.awaySlot);
+      liveBanner=`<div class="card" style="margin-bottom:14px;border-color:var(--red,#e8400c);display:flex;align-items:center;gap:12px">
+        <span class="kr-livepill">● LIVE</span>
+        <div style="flex:1"><b>${_koEsc(home)} ${r.homeGoals} × ${r.awayGoals} ${_koEsc(away)}</b> <span style="color:var(--muted);font-size:12px">· ${m.round}</span></div>
+      </div>`;
+    }
+    const bars=rows.map((r,i)=>{
+      const pct=Math.round(r.pts/max*100);
+      const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
+      const liveTag=r.livePts>0?`<span style="color:#ff7a45;font-weight:800;font-size:11px;margin-left:6px">▲ +${r.livePts} live</span>`:"";
+      return `<div class="kr-row">
+        <div class="kr-rank">${medal}</div>
+        <div class="kr-bodycol">
+          <div class="kr-name">${_koEsc(r.name)}${liveTag}</div>
+          <div class="kr-track"><i style="width:${pct}%"></i></div>
+        </div>
+        <div class="kr-pts">${r.pts}</div>
+      </div>`;
+    }).join("");
+    box.innerHTML = liveBanner + `<div class="card" style="padding:14px 16px">${bars}</div>` +
+      (liveMatches.length?"":`<div class="br-hint" style="margin-top:10px">No live knockout match right now — standings reflect all posted results.</div>`);
+  }catch(e){ box.innerHTML=`<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHASE 2 — KNOCKOUT ADMIN
+// ═══════════════════════════════════════════════════════════
+async function loadKoAdmin(){
+  if(!isAdmin) return;
+  // load config (lock hours + overrides) and results for the penalty panel
+  try{
+    const [cfg, ov, rs] = await Promise.all([
+      col("config").doc("main").get().catch(()=>null),
+      col("config").doc("p2overrides").get().catch(()=>null),
+      col("results").get().catch(()=>null)
+    ]);
+    if(cfg&&cfg.exists){ const d=cfg.data(); if(typeof d.p2LockHours==="number") P2_LOCK_HOURS=d.p2LockHours; if(d.p2Points&&d.p2Points.roundMult) p2PointsConfig.roundMult=Object.assign(p2PointsConfig.roundMult||{}, d.p2Points.roundMult); }
+    _p2Overrides = (ov&&ov.exists) ? (ov.data()||{}) : {};
+    _p2Results = {}; if(rs) rs.forEach(d=>_p2Results[d.id]=d.data());
+    const lh=document.getElementById("p2LockHours"); if(lh) lh.value=P2_LOCK_HOURS;
+    { const rm=p2PointsConfig.roundMult||{}; const setv=(id,v)=>{const e=document.getElementById(id); if(e&&typeof v==="number") e.value=v;};
+      setv("mR32",rm.R32); setv("mR16",rm.R16); setv("mQF",rm.QF); setv("mSF",rm.SF); setv("mFINAL",rm.FINAL); }
+    _renderP2AdvList();
+  }catch(e){ const el=document.getElementById("p2AdvList"); if(el) el.innerHTML=`<div style="color:var(--red);padding:12px">Error: ${e.message}</div>`; }
+}
+
+function _renderP2AdvList(){
+  const box=document.getElementById("p2AdvList"); if(!box) return;
+  // matches that have a posted result, are tied at full time, and need 'advanced'
+  const rows=[];
+  for(const m of KNOCKOUT_MATCHES){
+    const r=_p2Results[m.id];
+    if(!r || r.homeGoals===undefined || r.homeGoals===null) continue;
+    const tied = parseInt(r.homeGoals)===parseInt(r.awayGoals);
+    if(!tied) continue;
+    const home=_koResolve(m.homeSlot,_p2Results)||_koSlotLabel(m.homeSlot);
+    const away=_koResolve(m.awaySlot,_p2Results)||_koSlotLabel(m.awaySlot);
+    const adv=r.advanced;
+    rows.push(`<div class="p2adv-row" style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">Match ${m.mNo} · ${m.round}: <b>${_koEsc(home)} ${r.homeGoals}×${r.awayGoals} ${_koEsc(away)}</b>
+        ${adv?`<span style="color:var(--green);font-size:12px;margin-left:6px">✓ advanced: ${adv==="home"?_koEsc(home):_koEsc(away)}</span>`:`<span style="color:#FFC773;font-size:12px;margin-left:6px">⚠ needs who advanced</span>`}</div>
+      <button class="btn ${adv==="home"?"btn-gold":"btn-ghost"}" style="font-size:11px;padding:6px 10px" onclick="setP2Advanced('${m.id}','home')">${_koEsc(home)} ⬆</button>
+      <button class="btn ${adv==="away"?"btn-gold":"btn-ghost"}" style="font-size:11px;padding:6px 10px" onclick="setP2Advanced('${m.id}','away')">${_koEsc(away)} ⬆</button>
+    </div>`);
+  }
+  box.innerHTML = rows.length ? rows.join("") : `<div style="padding:14px;color:var(--muted)">No tied knockout matches yet. Nothing to set.</div>`;
+}
+
+async function setP2Advanced(matchId, side){
+  if(!isAdmin) return;
+  try{
+    await col("results").doc(matchId).set({ advanced: side, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+    if(_p2Results[matchId]) _p2Results[matchId].advanced=side;
+    showToast("✅ Set who advanced.");
+    _renderP2AdvList();
+  }catch(e){ showToast("Error: "+e.message, "error"); }
+}
+
+async function saveP2Multipliers(){
+  if(!isAdmin) return;
+  const g=id=>{ const e=document.getElementById(id); const v=parseFloat(e?e.value:""); return (isNaN(v)||v<0)?null:v; };
+  const rm={ R32:g("mR32"), R16:g("mR16"), QF:g("mQF"), SF:g("mSF"), FINAL:g("mFINAL") };
+  for(const k in rm){ if(rm[k]===null){ showToast("Enter valid multipliers (0 or more).","error"); return; } }
+  try{
+    await col("config").doc("main").set({ p2Points: { roundMult: rm } }, { merge:true });
+    p2PointsConfig.roundMult = rm;
+    showToast("✅ Round multipliers saved.");
+  }catch(e){ showToast("Error: "+e.message, "error"); }
+}
+
+async function saveP2LockHours(){
+  if(!isAdmin) return;
+  const el=document.getElementById("p2LockHours");
+  let h=parseFloat(el?el.value:"");
+  if(isNaN(h)||h<0){ showToast("Enter a valid number of hours.","error"); return; }
+  if(h>168) h=168;
+  try{
+    await col("config").doc("main").set({ p2LockHours: h }, { merge:true });
+    P2_LOCK_HOURS=h;
+    showToast(`✅ Phase 2 betting now closes ${h}h before kickoff.`);
+  }catch(e){ showToast("Error: "+e.message, "error"); }
+}
+
+function koSyncEspn(){
+  const st=document.getElementById("p2SyncStatus"); if(st) st.textContent="Syncing…";
+  if(typeof fetchLiveResults==="function"){
+    try{ fetchLiveResults(); }catch(e){}
+    setTimeout(()=>{ if(st) st.textContent="Reloaded."; loadKoAdmin(); }, 1500);
+  } else { if(st) st.textContent="Sync function unavailable."; }
+}
+
 //  START
 // ═══════════════════════════════════════════════════════════
-initFirebase();
-</script>
+initFirebase();</script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v3.2";
-  var APP_BUILD = "Jun 22, 2026";
+  var APP_VERSION = "v3.7";
+  var APP_BUILD = "Jun 27, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
 </body>
