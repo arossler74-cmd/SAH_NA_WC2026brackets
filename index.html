@@ -106,7 +106,12 @@ h1, h2, h3, .logo, .section-title, .login-card h1 { font-family: 'Anton', sans-s
 .phase-switch button:hover{color:#fff}
 .phase-switch button.active{color:#fff;border-bottom-color:var(--orange,#E8730C)}
 .phase-switch .ps-sub{display:block;font-family:'Archivo',sans-serif;font-weight:700;font-size:10px;letter-spacing:.3px;opacity:.7;text-transform:none}
-@media(max-width:600px){ .phase-switch{padding:0 10px} .phase-switch button{padding:11px 14px;font-size:12px} }
+@media(max-width:600px){
+  .phase-switch{padding:0}
+  .phase-switch button{flex:1 1 0;padding:10px 6px;font-size:12px;text-align:center}
+  .nav{padding:0 12px}
+  .nav-tab{padding:14px 14px;font-size:13px}
+}
 
 /* ── NAV TABS (FIFA: white bar, navy text, navy underline) ── */
 .nav {
@@ -741,9 +746,9 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 .br-tree{display:block;overflow-x:auto;overflow-y:hidden;padding:8px 0 18px;-webkit-overflow-scrolling:touch}
 .br-tree-inner{display:flex;align-items:stretch;gap:0;width:max-content;min-width:100%;padding:0 4px}
 .br-col{display:flex;flex-direction:column;width:184px;flex:none}
-.br-slot{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;min-height:120px;padding:6px 0}
+.br-slot{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;min-height:150px;padding:6px 0}
 .br-col .br-node{width:184px;box-sizing:border-box}
-.br-node{background:#15205C;border:1px solid #2A3470;border-radius:10px;color:#fff;padding:9px 11px;overflow:hidden;transition:border-color .2s}
+.br-node{background:#15205C;border:1px solid #2A3470;border-radius:10px;color:#fff;padding:9px 11px;height:auto;overflow:visible;transition:border-color .2s}
 .br-node.br-tbd{opacity:.85}
 .br-node.br-final{border-color:var(--gold,#F5B301)}
 .br-meta{display:flex;flex-wrap:wrap;gap:2px 6px;font-size:9px;color:var(--muted,#9aa3d4);margin-bottom:5px}
@@ -4951,7 +4956,7 @@ function koSyncEspn(){
 initFirebase();</script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v3.7";
+  var APP_VERSION = "v3.8";
   var APP_BUILD = "Jun 27, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
