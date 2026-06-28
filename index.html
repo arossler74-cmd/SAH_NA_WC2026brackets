@@ -762,7 +762,8 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
 .br-in{flex:none;width:30px;height:28px;font-size:13px;text-align:center;border-radius:6px;border:1px solid #2A3470;background:#0d1336;color:#fff;font-weight:700}
 .br-in:disabled{opacity:.4}
 .br-in-lock{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:28px;opacity:.6;border:1px dashed #2A3470;border-radius:6px;color:#FFC773;background:transparent}
-.br-foot{font-size:10px;margin-top:5px;color:#cdd6f5;border-top:1px dashed #2A3470;padding-top:5px}
+.br-foot{font-size:10px;margin-top:5px;color:#cdd6f5;border-top:1px dashed #2A3470;padding-top:5px;white-space:normal;line-height:1.4}
+.br-foot-lock{color:#FFC773}
 .br-lockbadge{flex:none;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#FFC773;background:rgba(232,115,12,.14);border:1px solid rgba(232,115,12,.28);padding:1px 6px;border-radius:6px;line-height:1.5;white-space:normal;max-width:100%}
 .br-openbadge{flex:none;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#5BE3A0;background:rgba(22,179,100,.14);border:1px solid rgba(22,179,100,.30);padding:1px 6px;border-radius:6px;line-height:1.5;white-space:normal;max-width:100%}
 .br-coltop{font-size:10px;color:var(--muted,#9aa3d4);text-transform:uppercase;letter-spacing:.6px;font-weight:700;text-align:center;height:18px;line-height:18px;flex:none}
@@ -1187,26 +1188,26 @@ select.input-select:focus { outline: none; border-color: var(--gold); }
     #page-liverace .race-row.bot .race-rank{color:var(--gold,#E8730C)}
     #page-liverace .race-row.leader .race-bar > i{background:linear-gradient(90deg,#E8730C,#FFB020)}
     #page-liverace{position:relative}
-    #page-liverace .race-livecard{display:flex;flex-direction:column;gap:9px;background:rgba(225,29,72,.10);border:1px solid rgba(225,29,72,.4);border-radius:14px;padding:12px 16px;margin-bottom:14px}
-    #page-liverace .race-livecard .lc-top{display:flex;align-items:center;gap:14px}
-    #page-liverace .race-livecard .lc-goals{display:flex;justify-content:space-between;gap:18px;padding-top:8px;border-top:1px solid rgba(255,255,255,.10)}
-    #page-liverace .race-livecard .lc-goals-home{flex:1;text-align:left}
-    #page-liverace .race-livecard .lc-goals-away{flex:1;text-align:right}
-    #page-liverace .race-livecard .lc-goal{font-size:12.5px;color:#FFE3C2;line-height:1.55;white-space:nowrap}
-    #page-liverace .race-livecard .lc-goal .lc-gmin{color:#FFB020;font-weight:800;margin-left:3px}
-    #page-liverace .race-livecard .lc-match{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;font-size:15px;color:#fff;flex-wrap:wrap}
-    #page-liverace .race-livecard .lc-match img{height:18px;border-radius:2px;vertical-align:middle}
-    #page-liverace .race-livecard .lc-score{font-size:24px;font-weight:900;color:#fff;letter-spacing:1px;margin:0 8px;white-space:nowrap}
-    #page-liverace .race-livecard .lc-live{display:inline-flex;align-items:center;gap:8px;flex:none;background:rgba(225,29,72,.20);border:1px solid rgba(225,29,72,.65);color:#fff;font-weight:800;font-size:12px;letter-spacing:.5px;padding:6px 13px;border-radius:999px;white-space:nowrap;animation:lcpill 1.6s ease-in-out infinite}
-    #page-liverace .race-livecard .lc-live .dot{width:9px;height:9px;border-radius:50%;background:#fff;flex:none;animation:racepulse 1.1s infinite}
-    #page-liverace .race-livecard .lc-live .lc-min{color:#FFD2D9;font-weight:700}
-    #page-liverace .race-livecard .lc-mine{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:9px;border-top:1px solid rgba(255,255,255,.10)}
-    #page-liverace .race-livecard .lc-mine-lab{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#FFB020}
-    #page-liverace .race-livecard .lc-mine-pick{font-size:16px;font-weight:900;color:#fff;letter-spacing:.5px}
-    #page-liverace .race-livecard .lc-mine-pts{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:900;color:var(--muted)}
-    #page-liverace .race-livecard .lc-mine-pts.pos{color:#37D399}
-    #page-liverace .race-livecard .lc-mine-live{font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#fff;background:rgba(225,29,72,.55);padding:1px 6px;border-radius:999px}
-    #page-liverace .race-livecard .lc-mine-none{font-size:12.5px;color:var(--muted);font-style:italic}
+    #page-liverace .race-livecard, #page-ko-liverace .race-livecard{display:flex;flex-direction:column;gap:9px;background:rgba(225,29,72,.10);border:1px solid rgba(225,29,72,.4);border-radius:14px;padding:12px 16px;margin-bottom:14px}
+    #page-liverace .race-livecard .lc-top, #page-ko-liverace .race-livecard .lc-top{display:flex;align-items:center;gap:14px}
+    #page-liverace .race-livecard .lc-goals, #page-ko-liverace .race-livecard .lc-goals{display:flex;justify-content:space-between;gap:18px;padding-top:8px;border-top:1px solid rgba(255,255,255,.10)}
+    #page-liverace .race-livecard .lc-goals-home, #page-ko-liverace .race-livecard .lc-goals-home{flex:1;text-align:left}
+    #page-liverace .race-livecard .lc-goals-away, #page-ko-liverace .race-livecard .lc-goals-away{flex:1;text-align:right}
+    #page-liverace .race-livecard .lc-goal, #page-ko-liverace .race-livecard .lc-goal{font-size:12.5px;color:#FFE3C2;line-height:1.55;white-space:nowrap}
+    #page-liverace .race-livecard .lc-goal .lc-gmin, #page-ko-liverace .race-livecard .lc-goal .lc-gmin{color:#FFB020;font-weight:800;margin-left:3px}
+    #page-liverace .race-livecard .lc-match, #page-ko-liverace .race-livecard .lc-match{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;font-size:15px;color:#fff;flex-wrap:wrap}
+    #page-liverace .race-livecard .lc-match img, #page-ko-liverace .race-livecard .lc-match img{height:18px;border-radius:2px;vertical-align:middle}
+    #page-liverace .race-livecard .lc-score, #page-ko-liverace .race-livecard .lc-score{font-size:24px;font-weight:900;color:#fff;letter-spacing:1px;margin:0 8px;white-space:nowrap}
+    #page-liverace .race-livecard .lc-live, #page-ko-liverace .race-livecard .lc-live{display:inline-flex;align-items:center;gap:8px;flex:none;background:rgba(225,29,72,.20);border:1px solid rgba(225,29,72,.65);color:#fff;font-weight:800;font-size:12px;letter-spacing:.5px;padding:6px 13px;border-radius:999px;white-space:nowrap;animation:lcpill 1.6s ease-in-out infinite}
+    #page-liverace .race-livecard .lc-live .dot, #page-ko-liverace .race-livecard .lc-live .dot{width:9px;height:9px;border-radius:50%;background:#fff;flex:none;animation:racepulse 1.1s infinite}
+    #page-liverace .race-livecard .lc-live .lc-min, #page-ko-liverace .race-livecard .lc-live .lc-min{color:#FFD2D9;font-weight:700}
+    #page-liverace .race-livecard .lc-mine, #page-ko-liverace .race-livecard .lc-mine{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:9px;border-top:1px solid rgba(255,255,255,.10)}
+    #page-liverace .race-livecard .lc-mine-lab, #page-ko-liverace .race-livecard .lc-mine-lab{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#FFB020}
+    #page-liverace .race-livecard .lc-mine-pick, #page-ko-liverace .race-livecard .lc-mine-pick{font-size:16px;font-weight:900;color:#fff;letter-spacing:.5px}
+    #page-liverace .race-livecard .lc-mine-pts, #page-ko-liverace .race-livecard .lc-mine-pts{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:900;color:var(--muted)}
+    #page-liverace .race-livecard .lc-mine-pts.pos, #page-ko-liverace .race-livecard .lc-mine-pts.pos{color:#37D399}
+    #page-liverace .race-livecard .lc-mine-live, #page-ko-liverace .race-livecard .lc-mine-live{font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#fff;background:rgba(225,29,72,.55);padding:1px 6px;border-radius:999px}
+    #page-liverace .race-livecard .lc-mine-none, #page-ko-liverace .race-livecard .lc-mine-none{font-size:12.5px;color:var(--muted);font-style:italic}
     @keyframes racepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
     @keyframes lcpill{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.55)}70%{box-shadow:0 0 0 7px rgba(225,29,72,0)}}
     #page-liverace .race-goal{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;background:linear-gradient(135deg,#E8730C,#FFB020);color:#fff;font-weight:900;font-size:24px;padding:16px 28px;border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.45);z-index:60;text-align:center;transition:transform .35s cubic-bezier(.2,1.3,.4,1),opacity .35s}
@@ -4607,13 +4608,15 @@ function _brNode(m){
     }
   }
   let foot="";
-  if(has){
-    foot=`<div class="br-foot">Result: <b>${r.homeGoals} × ${r.awayGoals}</b>`;
-    if(bet.homeGoals!==undefined) foot+=` · your pick <b>${bet.homeGoals} × ${bet.awayGoals}</b> · <b style="color:var(--orange)">+${p2CalcPoints(bet,r)} pts</b>`;
-    else foot+=` · <span style="opacity:.7">no pick</span>`;
-    foot+=`</div>`;
-  } else if(bet.homeGoals!==undefined && _p2RO){
-    foot=`<div class="br-foot">Pick: <b>${bet.homeGoals} × ${bet.awayGoals}</b></div>`;
+  const myPick = (bet.homeGoals!==undefined) ? `${bet.homeGoals}×${bet.awayGoals}` : null;
+  if(live){
+    // game in progress — no bets allowed; show compact live line WITH live points
+    const lp = myPick ? p2CalcPoints(bet,r) : null;
+    foot=`<div class="br-foot"><span class="br-foot-lock" title="Betting closed — match in progress">🔒</span> <b style="color:#FF5A6E">Live ${r.homeGoals}×${r.awayGoals}</b>${myPick?` · Pick ${myPick} · <b style="color:var(--orange)">+${lp} pts</b>`:""}</div>`;
+  } else if(has){
+    foot=`<div class="br-foot"><b>Final ${r.homeGoals}×${r.awayGoals}</b>${myPick?` · Pick ${myPick} · <b style="color:var(--orange)">+${p2CalcPoints(bet,r)} pts</b>`:` · <span style="opacity:.7">no pick</span>`}</div>`;
+  } else if(myPick && _p2RO){
+    foot=`<div class="br-foot">Pick ${myPick}</div>`;
   }
   function rowHTML(side, realTeam, slot, label, inputId, val){
     let flg, nameHTML;
@@ -4674,7 +4677,7 @@ async function _p2MyStanding(results){
     const rows=[];
     for(const uid in byUser){
       let pts=0, exact=0;
-      byUser[uid].forEach(b=>{ const r=results[b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(parseInt(b.homeGoals)===parseInt(r.homeGoals)&&parseInt(b.awayGoals)===parseInt(r.awayGoals)) exact++; } });
+      byUser[uid].forEach(b=>{ const r=results[b.matchId||b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(parseInt(b.homeGoals)===parseInt(r.homeGoals)&&parseInt(b.awayGoals)===parseInt(r.awayGoals)) exact++; } });
       rows.push({uid,pts,exact});
     }
     rows.sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
@@ -4771,6 +4774,63 @@ function koScrollToToday(){
 }
 
 // ── Phase 2 leaderboard (separate from Phase 1; humans only) ──
+let _koLbResults={}, _koLbNames={}, _koLbBetsByUser={};
+function openKoBreakdown(uid){
+  const name=_koLbNames[uid]||"Player";
+  const bets=_koLbBetsByUser[uid]||{};
+  const results=_koLbResults||{};
+  const order=KNOCKOUT_MATCHES.slice().sort((a,b)=>{
+    const ka=a.kickoff?new Date(a.kickoff).getTime():8e15, kb=b.kickoff?new Date(b.kickoff).getTime():8e15;
+    return ka-kb || (a.mNo-b.mNo);
+  });
+  let total=0, exact=0, played=0, shown=0;
+  const rowsHtml=order.map(m=>{
+    const r=results[m.id], has=r&&r.homeGoals!==undefined&&r.homeGoals!==null;
+    const bet=bets[m.id];
+    if(!has && !bet) return "";
+    shown++;
+    const home=_koResolve(m.homeSlot,results)||_koSlotLabel(m.homeSlot);
+    const away=_koResolve(m.awaySlot,results)||_koSlotLabel(m.awaySlot);
+    const gdate=m.kickoff?new Date(m.kickoff).toLocaleDateString([], {month:"short",day:"numeric"}):"";
+    const meta=["#"+m.mNo, m.round, gdate].filter(Boolean).join(" · ");
+    const pickCell=bet?`<strong>${bet.homeGoals} × ${bet.awayGoals}</strong>`:`<span style="color:var(--muted)">—</span>`;
+    let resultCell, ptsCell;
+    if(has){
+      played++;
+      const liveTag=r.live?` <span class="live-badge"><span class="dot"></span>LIVE${r.liveLabel?" "+r.liveLabel:""}</span>`:"";
+      resultCell=`<strong>${r.homeGoals} × ${r.awayGoals}</strong>${liveTag}`;
+      if(bet){ const pts=p2CalcPoints(bet,r); total+=pts; if(parseInt(bet.homeGoals)===parseInt(r.homeGoals)&&parseInt(bet.awayGoals)===parseInt(r.awayGoals)) exact++; ptsCell=`<strong style="color:var(--orange)">+${pts}</strong>`; }
+      else ptsCell=`<span style="color:var(--muted)">—</span>`;
+    } else {
+      resultCell=`<span style="color:var(--muted);font-size:12px;font-weight:600">${m.kickoff?fmtKickTz(m.kickoff):"upcoming"}</span>`;
+      ptsCell=`<span style="color:var(--muted)">—</span>`;
+    }
+    return `<tr style="border-top:1px solid var(--border,#2A3470)">
+      <td style="padding:9px 12px;font-size:13px">
+        <div style="color:var(--muted);font-size:10.5px;font-weight:700;margin-bottom:3px">${meta}</div>
+        ${_brFlagImg(home)} ${_koEsc(home)} <span style="color:var(--muted)">×</span> ${_koEsc(away)} ${_brFlagImg(away)}
+      </td>
+      <td style="padding:9px 12px;text-align:center;font-size:13px">${pickCell}</td>
+      <td style="padding:9px 12px;text-align:center;font-weight:800">${resultCell}</td>
+      <td style="padding:9px 12px;text-align:right;white-space:nowrap;font-size:13px">${ptsCell}</td>
+    </tr>`;
+  }).join("");
+  const body = shown ? `<table style="width:100%;border-collapse:collapse">
+      <tr style="text-align:left;color:var(--muted);font-size:11px">
+        <th style="padding:9px 12px">MATCH</th><th style="padding:9px 12px;text-align:center">PICK</th><th style="padding:9px 12px;text-align:center">RESULT</th><th style="padding:9px 12px;text-align:right">PTS</th>
+      </tr>${rowsHtml}</table>`
+    : `<div style="padding:28px;text-align:center;color:var(--muted)">No knockout predictions yet for this player.</div>`;
+  let ov=document.getElementById("koBreakdownOverlay");
+  if(!ov){ ov=document.createElement("div"); ov.id="koBreakdownOverlay"; ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px"; ov.onclick=e=>{ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov); }
+  ov.innerHTML=`<div style="background:var(--card,#15205C);border-radius:16px;max-width:660px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#2A3470)">
+    <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border,#2A3470)">
+      <div><strong style="font-size:17px;color:#fff">${_koEsc(name)}</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">${total} pts · ${exact} exact · ${played} played</div></div>
+      <button class="btn btn-ghost-light" onclick="document.getElementById('koBreakdownOverlay').remove()">✕</button>
+    </div>
+    <div style="overflow:auto">${body}</div>
+  </div>`;
+}
+
 async function loadKoLeaderboard(){
   const body=document.getElementById("koSbBody"); if(!body) return;
   body.innerHTML=`<tr><td colspan="5" class="loader"><div class="spinner"></div></td></tr>`;
@@ -4782,13 +4842,16 @@ async function loadKoLeaderboard(){
     us.forEach(d=>{ const u=d.data(); if(u.role==="admin"){adminSet.add(d.id);return;} names[d.id]=u.name||u.email||"—"; paid[d.id]=!!u.p2Paid; });
     const byUser={};
     bs.forEach(d=>{ const b=d.data(); if(b.phase!=="knockouts"||!b.userId||adminSet.has(b.userId)) return; (byUser[b.userId]=byUser[b.userId]||[]).push(b); });
+    // cache for the per-player picks popup
+    _koLbResults=results; _koLbNames=names;
+    _koLbBetsByUser={}; for(const uid in byUser){ _koLbBetsByUser[uid]={}; byUser[uid].forEach(b=>{ _koLbBetsByUser[uid][b.matchId||b.id]=b; }); }
     // matches played (knockout results posted)
     const koIds=new Set(KNOCKOUT_MATCHES.map(m=>m.id));
     let played=0; KNOCKOUT_MATCHES.forEach(m=>{ const r=results[m.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null) played++; });
     const rows=[];
     for(const uid in byUser){
       let pts=0, exact=0, partial=0;
-      byUser[uid].forEach(b=>{ const r=results[b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(parseInt(b.homeGoals)===parseInt(r.homeGoals)&&parseInt(b.awayGoals)===parseInt(r.awayGoals)) exact++; else if(p>0) partial++; } });
+      byUser[uid].forEach(b=>{ const r=results[b.matchId||b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(parseInt(b.homeGoals)===parseInt(r.homeGoals)&&parseInt(b.awayGoals)===parseInt(r.awayGoals)) exact++; else if(p>0) partial++; } });
       rows.push({uid,name:names[uid]||"—",pts,exact,partial,paid:!!paid[uid]});
     }
     rows.sort((a,b)=>b.pts-a.pts||b.exact-a.exact||a.name.localeCompare(b.name));
@@ -4810,7 +4873,7 @@ async function loadKoLeaderboard(){
     body.innerHTML = rows.map((r,i)=>{
       const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);
       const payTag = r.paid?`<span style="color:var(--green);font-size:11px;margin-left:6px">✓ paid</span>`:`<span style="color:#FFC773;font-size:11px;margin-left:6px">unpaid</span>`;
-      return `<tr><td style="text-align:center;font-weight:800">${medal}</td><td>${_koEsc(r.name)}${payTag}</td><td style="text-align:center">${r.exact}</td><td style="text-align:center">${r.partial}</td><td style="text-align:right"><b>${r.pts}</b></td></tr>`;
+      return `<tr style="cursor:pointer" onclick="openKoBreakdown('${r.uid}')" title="Tap to see ${_koEsc(r.name)}'s picks"><td style="text-align:center;font-weight:800">${medal}</td><td>${_koEsc(r.name)}${payTag}</td><td style="text-align:center">${r.exact}</td><td style="text-align:center">${r.partial}</td><td style="text-align:right"><b>${r.pts}</b></td></tr>`;
     }).join("");
   }catch(e){ body.innerHTML=`<tr><td colspan="5" style="color:var(--red);padding:20px">Error: ${e.message}</td></tr>`; }
 }
@@ -4830,7 +4893,7 @@ async function loadKoLiveRace(){
     const rows=[];
     for(const uid in byUser){
       let pts=0, livePts=0;
-      byUser[uid].forEach(b=>{ const r=results[b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(r.live) livePts+=p; } });
+      byUser[uid].forEach(b=>{ const r=results[b.matchId||b.id]; if(r&&r.homeGoals!==undefined&&r.homeGoals!==null){ const p=p2CalcPoints(b,r); pts+=p; if(r.live) livePts+=p; } });
       rows.push({uid,name:names[uid]||"—",pts,livePts});
     }
     rows.sort((a,b)=>b.pts-a.pts||a.name.localeCompare(b.name));
@@ -4838,13 +4901,31 @@ async function loadKoLiveRace(){
     const max=Math.max(1, rows[0].pts);
     let liveBanner="";
     if(liveMatches.length){
-      const m=liveMatches[0]; const r=results[m.id];
-      const home=_koResolve(m.homeSlot,results)||_koSlotLabel(m.homeSlot);
-      const away=_koResolve(m.awaySlot,results)||_koSlotLabel(m.awaySlot);
-      liveBanner=`<div class="card" style="margin-bottom:14px;border-color:var(--red,#e8400c);display:flex;align-items:center;gap:12px">
-        <span class="kr-livepill">● LIVE</span>
-        <div style="flex:1"><b>${_koEsc(home)} ${r.homeGoals} × ${r.awayGoals} ${_koEsc(away)}</b> <span style="color:var(--muted);font-size:12px">· ${m.round}</span></div>
-      </div>`;
+      _mdResultsCache=results;
+      const myUid=currentUser&&currentUser.uid;
+      const _goalLine = g => `<div class="lc-goal">⚽ ${_koEsc(g.scorer||"")}<span class="lc-gmin">${_koEsc(g.minute||"")}</span></div>`;
+      liveBanner = liveMatches.map(m=>{
+        const r=results[m.id];
+        const home=_koResolve(m.homeSlot,results)||_koSlotLabel(m.homeSlot);
+        const away=_koResolve(m.awaySlot,results)||_koSlotLabel(m.awaySlot);
+        const gs=Array.isArray(r.goals)?r.goals:[];
+        const homeG=gs.filter(g=>g.side==="home"), awayG=gs.filter(g=>g.side==="away");
+        const goalsRow=(homeG.length||awayG.length)?`<div class="lc-goals"><div class="lc-goals-home">${homeG.map(_goalLine).join("")}</div><div class="lc-goals-away">${awayG.map(_goalLine).join("")}</div></div>`:"";
+        const myBet=(myUid&&byUser[myUid])?byUser[myUid].find(b=>(b.matchId||b.id)===m.id):null;
+        let myRow;
+        if(myBet&&myBet.homeGoals!==undefined){ const lp=p2CalcPoints(myBet,r);
+          myRow=`<div class="lc-mine"><span class="lc-mine-lab">Your pick</span><span class="lc-mine-pick">${myBet.homeGoals}–${myBet.awayGoals}</span><span class="lc-mine-pts ${lp>0?'pos':'zero'}">${lp>0?'+':''}${lp} pts <span class="lc-mine-live">live</span></span></div>`;
+        } else { myRow=`<div class="lc-mine"><span class="lc-mine-lab">Your pick</span><span class="lc-mine-none">no prediction for this match</span></div>`; }
+        return `<div class="race-livecard" style="margin-bottom:12px">
+          <div class="lc-top">
+            <div class="lc-match">${_brFlagImg(home)} <span>${_koEsc(home)}</span> <span class="lc-score">${r.homeGoals}–${r.awayGoals}</span> <span>${_koEsc(away)}</span> ${_brFlagImg(away)}</div>
+            <div class="lc-live"><span class="dot"></span> LIVE${r.liveLabel?` <span class="lc-min">${_koEsc(r.liveLabel)}</span>`:""}</div>
+            <button class="md-stats-btn" onclick="openMatchDetail('${m.id}')">📊 Stats</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);padding:0 2px 4px">${m.round} · 📍 ${_koEsc(m.venue||"")}</div>
+          ${goalsRow}${myRow}
+        </div>`;
+      }).join("");
     }
     const bars=rows.map((r,i)=>{
       const pct=Math.round(r.pts/max*100);
@@ -4956,7 +5037,7 @@ function koSyncEspn(){
 initFirebase();</script>
 <script>
   /* ── App version (single source of truth — bump these two when you ship) ── */
-  var APP_VERSION = "v3.8";
+  var APP_VERSION = "v4.0";
   var APP_BUILD = "Jun 27, 2026";
   (function(){ var el = document.getElementById("appVersion"); if(el) el.textContent = APP_VERSION + " \u00b7 " + APP_BUILD; })();
 </script>
